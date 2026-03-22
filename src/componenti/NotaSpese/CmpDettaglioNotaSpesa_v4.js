@@ -12,6 +12,7 @@ import IconButton from "@mui/material/IconButton";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
@@ -47,11 +48,10 @@ export default class CmpDettaglioNotaSpesa extends Component {
     errorRifUtente: false,
     errorRifGara: false,
     errorDataServizio: false,
-    errorOraInizioServizio: false,
-    errorOraFineServizio: false,
     errorStato: false,
 
     fileAllegato1: null,
+    fileAllegato2: null,
   };
 
   notaSpesaVuota = {
@@ -74,6 +74,8 @@ export default class CmpDettaglioNotaSpesa extends Component {
 
     spesa1_descrizione: "",
     spesa1_eur: "",
+    spesa2_descrizione: "",
+    spesa2_eur: "",
 
     somme_ricevute_da: "",
     somme_ricevute_eur: "",
@@ -82,16 +84,12 @@ export default class CmpDettaglioNotaSpesa extends Component {
 
     allegato1_path: "",
     allegato1_nome_file: "",
+    allegato2_path: "",
+    allegato2_nome_file: "",
     remove_allegato1: 0,
+    remove_allegato2: 0,
 
     stato: "BOZZA",
-  };
-
-  inputStyle = {
-    border: "2px solid #94a3b8",
-    borderRadius: "10px",
-    boxShadow: "none",
-    minHeight: "42px",
   };
 
   componentDidUpdate = (prevProps) => {
@@ -122,10 +120,9 @@ export default class CmpDettaglioNotaSpesa extends Component {
             errorRifUtente: false,
             errorRifGara: false,
             errorDataServizio: false,
-            errorOraInizioServizio: false,
-            errorOraFineServizio: false,
             errorStato: false,
             fileAllegato1: null,
+            fileAllegato2: null,
           });
         })
         .catch((error) => {
@@ -147,10 +144,9 @@ export default class CmpDettaglioNotaSpesa extends Component {
         errorRifUtente: false,
         errorRifGara: false,
         errorDataServizio: false,
-        errorOraInizioServizio: false,
-        errorOraFineServizio: false,
         errorStato: false,
         fileAllegato1: null,
+        fileAllegato2: null,
       });
     }
   };
@@ -187,32 +183,18 @@ export default class CmpDettaglioNotaSpesa extends Component {
         propState = "errorRifUtente";
         errore = !valore || String(valore).trim() === "";
         break;
-
       case "rif_gara":
         propState = "errorRifGara";
         errore = !valore || String(valore).trim() === "";
         break;
-
       case "data_servizio":
         propState = "errorDataServizio";
         errore = !valore || String(valore).trim() === "";
         break;
-
-      case "ora_inizio_servizio":
-        propState = "errorOraInizioServizio";
-        errore = !valore || String(valore).trim() === "";
-        break;
-
-      case "ora_fine_servizio":
-        propState = "errorOraFineServizio";
-        errore = !valore || String(valore).trim() === "";
-        break;
-
       case "stato":
         propState = "errorStato";
         errore = !valore || String(valore).trim() === "";
         break;
-
       default:
         break;
     }
@@ -222,12 +204,16 @@ export default class CmpDettaglioNotaSpesa extends Component {
     }
   };
 
-  handleCambioAllegato = (evt) => {
+  handleCambioAllegato = (numeroAllegato, evt) => {
     const file =
       evt.target.files && evt.target.files[0] ? evt.target.files[0] : null;
 
     if (!file) {
-      this.setState({ fileAllegato1: null });
+      if (numeroAllegato === 1) {
+        this.setState({ fileAllegato1: null });
+      } else {
+        this.setState({ fileAllegato2: null });
+      }
       return;
     }
 
@@ -265,20 +251,40 @@ export default class CmpDettaglioNotaSpesa extends Component {
       return;
     }
 
-    this.setState({ fileAllegato1: file });
-    this.cambioProprietaNotaSpesa("allegato1_nome_file", file.name);
-    this.cambioProprietaNotaSpesa("allegato1_path", "");
-    this.cambioProprietaNotaSpesa("remove_allegato1", 0);
+    if (numeroAllegato === 1) {
+      this.setState({ fileAllegato1: file });
+      this.cambioProprietaNotaSpesa("allegato1_nome_file", file.name);
+      this.cambioProprietaNotaSpesa("allegato1_path", "");
+      this.cambioProprietaNotaSpesa("remove_allegato1", 0);
+    } else {
+      this.setState({ fileAllegato2: file });
+      this.cambioProprietaNotaSpesa("allegato2_nome_file", file.name);
+      this.cambioProprietaNotaSpesa("allegato2_path", "");
+      this.cambioProprietaNotaSpesa("remove_allegato2", 0);
+    }
   };
 
-  rimuoviAllegato = () => {
-    this.setState({ fileAllegato1: null });
+  rimuoviAllegato = (numeroAllegato) => {
+    if (numeroAllegato === 1) {
+      this.setState({ fileAllegato1: null });
+      this.setState((prevState) => ({
+        notaSpesaSelezionata: {
+          ...prevState.notaSpesaSelezionata,
+          allegato1_nome_file: "",
+          allegato1_path: "",
+          remove_allegato1: 1,
+        },
+      }));
+      return;
+    }
+
+    this.setState({ fileAllegato2: null });
     this.setState((prevState) => ({
       notaSpesaSelezionata: {
         ...prevState.notaSpesaSelezionata,
-        allegato1_nome_file: "",
-        allegato1_path: "",
-        remove_allegato1: 1,
+        allegato2_nome_file: "",
+        allegato2_path: "",
+        remove_allegato2: 1,
       },
     }));
   };
@@ -295,16 +301,12 @@ export default class CmpDettaglioNotaSpesa extends Component {
     this.validaCampo("rif_utente", nota.rif_utente);
     this.validaCampo("rif_gara", nota.rif_gara);
     this.validaCampo("data_servizio", nota.data_servizio);
-    this.validaCampo("ora_inizio_servizio", nota.ora_inizio_servizio);
-    this.validaCampo("ora_fine_servizio", nota.ora_fine_servizio);
     this.validaCampo("stato", nota.stato);
 
     const checks = [
       this.checkValue(nota.rif_utente),
       this.checkValue(nota.rif_gara),
       this.checkValue(nota.data_servizio),
-      this.checkValue(nota.ora_inizio_servizio),
-      this.checkValue(nota.ora_fine_servizio),
       this.checkValue(nota.stato),
     ];
 
@@ -342,6 +344,10 @@ export default class CmpDettaglioNotaSpesa extends Component {
       formData.append("allegato1_file", this.state.fileAllegato1);
     }
 
+    if (this.state.fileAllegato2) {
+      formData.append("allegato2_file", this.state.fileAllegato2);
+    }
+
     axios
       .post(urlApi + endpoint, formData, {
         withCredentials: true,
@@ -357,6 +363,7 @@ export default class CmpDettaglioNotaSpesa extends Component {
           checkMessaggio: "Salvataggio eseguito correttamente.",
           avvisaOperazione: true,
           fileAllegato1: null,
+          fileAllegato2: null,
         });
 
         this.props.chiudiDettaglio(true);
@@ -453,70 +460,20 @@ export default class CmpDettaglioNotaSpesa extends Component {
         }
       });
 
-      if (!gara) {
-        return {
-          nome: "-",
-          disciplina: "-",
-          manifestazione: "-",
-          comune: "-",
-          provincia: "-",
-          regione: "-",
-        };
-      }
+      if (!gara) return <>Gara non selezionata</>;
 
-      return {
-        nome: gara.nome_gara || "-",
-        disciplina:
-          gara.disciplina ||
-          gara.nome_disciplina ||
-          gara.desc_disciplina ||
-          "-",
-        manifestazione:
-          gara.manifestazione ||
-          gara.nome_manifestazione ||
-          gara.desc_manifestazione ||
-          "-",
-        comune: gara.desc_comune || gara.comune || "-",
-        provincia: gara.desc_provincia || gara.provincia || "-",
-        regione: gara.desc_regione || gara.regione || "-",
-      };
+      return (
+        <>
+          {(gara.desc_regione || "-") +
+            " - " +
+            (gara.desc_provincia || "-") +
+            " - " +
+            (gara.desc_comune || "-")}
+        </>
+      );
+    } else {
+      return <>Gara non selezionata</>;
     }
-
-    return {
-      nome: "-",
-      disciplina: "-",
-      manifestazione: "-",
-      comune: "-",
-      provincia: "-",
-      regione: "-",
-    };
-  };
-
-  parseNumero = (valore) => {
-    if (valore === null || valore === undefined || valore === "") return 0;
-    if (typeof valore === "number") return Number.isNaN(valore) ? 0 : valore;
-
-    const cleaned = String(valore).replace(",", ".").trim();
-    const num = parseFloat(cleaned);
-    return Number.isNaN(num) ? 0 : num;
-  };
-
-  formattaImporto = (valore) => {
-    const num = this.parseNumero(valore);
-    return new Intl.NumberFormat("it-IT", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(num);
-  };
-
-  calcolaTotaleNota = () => {
-    const nota = this.state.notaSpesaSelezionata || {};
-
-    const autostrada = this.parseNumero(nota.spese_autostrada_eur);
-    const sp1 = this.parseNumero(nota.spesa1_eur);
-    const ricevute = this.parseNumero(nota.somme_ricevute_eur);
-
-    return autostrada + sp1 - ricevute;
   };
 
   renderSezione = (titolo, children, extra = null) => (
@@ -547,8 +504,8 @@ export default class CmpDettaglioNotaSpesa extends Component {
     </Paper>
   );
 
-  renderFieldBox = (label, value) => (
-    <div>
+  renderFieldInline = (label, value, alignRight = false) => (
+    <div className="col-12 col-md-6 col-lg-3 mb-3">
       <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
         {label}
       </div>
@@ -560,6 +517,7 @@ export default class CmpDettaglioNotaSpesa extends Component {
           borderRadius: 10,
           background: "#fff",
           fontWeight: 600,
+          textAlign: alignRight ? "right" : "left",
         }}
       >
         {value || "-"}
@@ -567,58 +525,9 @@ export default class CmpDettaglioNotaSpesa extends Component {
     </div>
   );
 
-  renderImportoRow = (descrizione, valore, strong = false) => (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px 0",
-        borderBottom: "1px solid #eef2f7",
-        gap: "16px",
-      }}
-    >
-      <div
-        style={{
-          color: strong ? "#0f172a" : "#334155",
-          fontWeight: strong ? 700 : 500,
-        }}
-      >
-        {descrizione}
-      </div>
-      <div
-        style={{
-          minWidth: "150px",
-          textAlign: "right",
-          fontWeight: strong ? 800 : 700,
-          color: strong ? "#0f172a" : "#111827",
-        }}
-      >
-        € {this.formattaImporto(valore)}
-      </div>
-    </div>
-  );
-
-  renderInputImporto = (label, fieldName, value) => (
-    <Form.Group>
-      <Form.Label style={{ fontWeight: 600 }}>{label}</Form.Label>
-      <Form.Control
-        type="number"
-        step="0.01"
-        value={value || ""}
-        onChange={(evt) =>
-          this.cambioProprietaNotaSpesa(fieldName, evt.target.value)
-        }
-        style={{ ...this.inputStyle, textAlign: "right" }}
-      />
-    </Form.Group>
-  );
-
   render() {
     const nota = this.state.notaSpesaSelezionata;
     const elencoGare = this.props.elencoGare || [];
-    const infoGara = this.retunInfoGara();
-    const totaleNota = this.calcolaTotaleNota();
 
     return (
       <div>
@@ -706,7 +615,11 @@ export default class CmpDettaglioNotaSpesa extends Component {
                           value="1"
                         />
                         <Tab
-                          icon={<AttachMoneyIcon />}
+                          icon={
+                            <>
+                              <AttachMoneyIcon /> <DirectionsCarIcon />
+                            </>
+                          }
                           iconPosition="start"
                           label="Spese"
                           value="3"
@@ -725,18 +638,33 @@ export default class CmpDettaglioNotaSpesa extends Component {
                         "Dati generali",
                         <div className="container-fluid px-0">
                           <div className="row">
-                            <div className="col-12 col-md-6 mb-3">
-                              {this.renderFieldBox(
-                                "Utente",
-                                this.returnUserInfo(),
-                              )}
+                            <div className="col-12 col-md-4 mb-3">
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  color: "#64748b",
+                                  marginBottom: 4,
+                                }}
+                              >
+                                Utente
+                              </div>
+                              <div
+                                style={{
+                                  minHeight: 42,
+                                  padding: "10px 12px",
+                                  border: "1px solid #e2e8f0",
+                                  borderRadius: 10,
+                                  background: "#fff",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {this.returnUserInfo()}
+                              </div>
                             </div>
 
-                            <div className="col-12 col-md-6 mb-3">
+                            <div className="col-12 col-md-8 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Gara assegnata *
-                                </Form.Label>
+                                <Form.Label>Gara assegnata *</Form.Label>
                                 <Form.Select
                                   value={nota.rif_gara || ""}
                                   onChange={(evt) =>
@@ -747,7 +675,6 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                   }
                                   isValid={!this.state.errorRifGara}
                                   isInvalid={this.state.errorRifGara}
-                                  style={this.inputStyle}
                                 >
                                   <option value="">Seleziona gara...</option>
                                   {elencoGare.map((item) => (
@@ -764,35 +691,28 @@ export default class CmpDettaglioNotaSpesa extends Component {
                           </div>
 
                           <div className="row">
-                            <div className="col-12 col-md-6 mb-3">
-                              {this.renderFieldBox(
-                                "Disciplina",
-                                infoGara.disciplina,
-                              )}
-                            </div>
-
-                            <div className="col-12 col-md-6 mb-3">
-                              {this.renderFieldBox(
-                                "Manifestazione",
-                                infoGara.manifestazione,
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="row">
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderFieldBox("Comune", infoGara.comune)}
-                            </div>
-
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderFieldBox(
-                                "Provincia",
-                                infoGara.provincia,
-                              )}
-                            </div>
-
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderFieldBox("Regione", infoGara.regione)}
+                            <div className="col-12">
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  color: "#64748b",
+                                  marginBottom: 4,
+                                }}
+                              >
+                                Territorio gara
+                              </div>
+                              <div
+                                style={{
+                                  minHeight: 42,
+                                  padding: "10px 12px",
+                                  border: "1px solid #e2e8f0",
+                                  borderRadius: 10,
+                                  background: "#fff",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {this.retunInfoGara()}
+                              </div>
                             </div>
                           </div>
                         </div>,
@@ -805,14 +725,12 @@ export default class CmpDettaglioNotaSpesa extends Component {
                       )}
 
                       {this.renderSezione(
-                        "Servizio e gara",
+                        "Data e orari",
                         <div className="container-fluid px-0">
                           <div className="row">
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Data servizio *
-                                </Form.Label>
+                                <Form.Label>Data servizio *</Form.Label>
                                 <Form.Control
                                   type="date"
                                   value={nota.data_servizio || ""}
@@ -824,16 +742,13 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                   }
                                   isValid={!this.state.errorDataServizio}
                                   isInvalid={this.state.errorDataServizio}
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora inizio servizio *
-                                </Form.Label>
+                                <Form.Label>Ora inizio servizio</Form.Label>
                                 <Form.Control
                                   type="time"
                                   value={nota.ora_inizio_servizio || ""}
@@ -843,18 +758,13 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       evt.target.value,
                                     )
                                   }
-                                  isValid={!this.state.errorOraInizioServizio}
-                                  isInvalid={this.state.errorOraInizioServizio}
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora fine servizio *
-                                </Form.Label>
+                                <Form.Label>Ora fine servizio</Form.Label>
                                 <Form.Control
                                   type="time"
                                   value={nota.ora_fine_servizio || ""}
@@ -864,18 +774,13 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       evt.target.value,
                                     )
                                   }
-                                  isValid={!this.state.errorOraFineServizio}
-                                  isInvalid={this.state.errorOraFineServizio}
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Stato nota *
-                                </Form.Label>
+                                <Form.Label>Stato nota *</Form.Label>
                                 <Form.Select
                                   value={nota.stato || ""}
                                   onChange={(evt) =>
@@ -886,7 +791,6 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                   }
                                   isValid={!this.state.errorStato}
                                   isInvalid={this.state.errorStato}
-                                  style={this.inputStyle}
                                 >
                                   <option value="">Seleziona stato...</option>
                                   <option value="BOZZA">BOZZA</option>
@@ -902,9 +806,7 @@ export default class CmpDettaglioNotaSpesa extends Component {
                           <div className="row">
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora inizio gara
-                                </Form.Label>
+                                <Form.Label>Ora inizio gara</Form.Label>
                                 <Form.Control
                                   type="time"
                                   value={nota.ora_inizio_gara || ""}
@@ -914,16 +816,13 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       evt.target.value,
                                     )
                                   }
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora fine gara
-                                </Form.Label>
+                                <Form.Label>Ora fine gara</Form.Label>
                                 <Form.Control
                                   type="time"
                                   value={nota.ora_fine_gara || ""}
@@ -933,7 +832,6 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       evt.target.value,
                                     )
                                   }
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
@@ -949,9 +847,7 @@ export default class CmpDettaglioNotaSpesa extends Component {
                           <div className="row">
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Targa auto
-                                </Form.Label>
+                                <Form.Label>Targa auto</Form.Label>
                                 <Form.Control
                                   type="text"
                                   value={nota.targa_auto || ""}
@@ -962,16 +858,13 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                     )
                                   }
                                   placeholder="AA000AA"
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Km percorsi
-                                </Form.Label>
+                                <Form.Label>Km percorsi</Form.Label>
                                 <Form.Control
                                   type="number"
                                   step="0.01"
@@ -983,19 +876,13 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                     )
                                   }
                                   placeholder="0,00"
-                                  style={{
-                                    ...this.inputStyle,
-                                    textAlign: "right",
-                                  }}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Persone trasportate
-                                </Form.Label>
+                                <Form.Label>Persone trasportate</Form.Label>
                                 <Form.Control
                                   type="text"
                                   value={nota.persone_trasportate || ""}
@@ -1005,16 +892,13 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       evt.target.value,
                                     )
                                   }
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-3 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Trasportato da
-                                </Form.Label>
+                                <Form.Label>Trasportato da</Form.Label>
                                 <Form.Control
                                   type="text"
                                   value={nota.trasportato_da || ""}
@@ -1024,58 +908,54 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       evt.target.value,
                                     )
                                   }
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
                           </div>
                         </div>,
-                        <Chip
-                          icon={<DirectionsCarIcon />}
-                          label="Trasporto"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />,
                       )}
 
                       {this.renderSezione(
-                        "Spese",
+                        "Spese di trasporto",
                         <div className="container-fluid px-0">
-                          <div className="row mb-3">
-                            <div className="col-12 col-md-8 mb-3">
+                          <div className="row">
+                            <div className="col-12 col-md-4 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Spesa - descrizione
-                                </Form.Label>
+                                <Form.Label>Spese autostrada €</Form.Label>
                                 <Form.Control
-                                  type="text"
-                                  value={nota.spesa1_descrizione || ""}
+                                  type="number"
+                                  step="0.01"
+                                  value={nota.spese_autostrada_eur || ""}
                                   onChange={(evt) =>
                                     this.cambioProprietaNotaSpesa(
-                                      "spesa1_descrizione",
+                                      "spese_autostrada_eur",
                                       evt.target.value,
                                     )
                                   }
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>
 
                             <div className="col-12 col-md-4 mb-3">
-                              {this.renderInputImporto(
-                                "Spesa - importo €",
-                                "spesa1_eur",
-                                nota.spesa1_eur,
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="row mb-3">
-                            <div className="col-12 col-md-8 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Somme ricevute da
-                                </Form.Label>
+                                <Form.Label>Somme ricevute €</Form.Label>
+                                <Form.Control
+                                  type="number"
+                                  step="0.01"
+                                  value={nota.somme_ricevute_eur || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaNotaSpesa(
+                                      "somme_ricevute_eur",
+                                      evt.target.value,
+                                    )
+                                  }
+                                />
+                              </Form.Group>
+                            </div>
+
+                            <div className="col-12 col-md-4 mb-3">
+                              <Form.Group>
+                                <Form.Label>Ricevute da</Form.Label>
                                 <Form.Control
                                   type="text"
                                   value={nota.somme_ricevute_da || ""}
@@ -1085,89 +965,79 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       evt.target.value,
                                     )
                                   }
-                                  style={this.inputStyle}
+                                />
+                              </Form.Group>
+                            </div>
+                          </div>
+                        </div>,
+                      )}
+
+                      {this.renderSezione(
+                        "Spesa generale",
+                        <div className="container-fluid px-0">
+                          <div className="row">
+                            <div className="col-12 col-md-9 mb-3">
+                              <Form.Group>
+                                <Form.Label>Descrizione</Form.Label>
+                                <Form.Control
+                                  type="text"
+                                  value={nota.spesa1_descrizione || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaNotaSpesa(
+                                      "spesa1_descrizione",
+                                      evt.target.value,
+                                    )
+                                  }
                                 />
                               </Form.Group>
                             </div>
 
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderInputImporto(
-                                "Somme ricevute €",
-                                "somme_ricevute_eur",
-                                nota.somme_ricevute_eur,
-                              )}
+                            <div className="col-12 col-md-3 mb-3">
+                              <Form.Group>
+                                <Form.Label>Importo €</Form.Label>
+                                <Form.Control
+                                  type="number"
+                                  step="0.01"
+                                  value={nota.spesa1_eur || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaNotaSpesa(
+                                      "spesa1_eur",
+                                      evt.target.value,
+                                    )
+                                  }
+                                />
+                              </Form.Group>
                             </div>
                           </div>
-
-                          <div className="row mb-3 justify-content-end">
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderInputImporto(
-                                "Spese autostrada €",
-                                "spese_autostrada_eur",
-                                nota.spese_autostrada_eur,
-                              )}
-                            </div>
-                          </div>
-                        </div>,
-                        <Chip
-                          icon={<AttachMoneyIcon />}
-                          label="Importi"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />,
-                      )}
-
-                      {this.renderSezione(
-                        "Riepilogo nota",
-                        <div>
-                          {this.renderImportoRow(
-                            "Spese AUTOSTRADA",
-                            nota.spese_autostrada_eur,
-                          )}
-                          {this.renderImportoRow(
-                            nota.spesa1_descrizione || "Spesa",
-                            nota.spesa1_eur,
-                          )}
-                          {this.renderImportoRow(
-                            `Somme ricevute${nota.somme_ricevute_da ? " da " + nota.somme_ricevute_da : ""}`,
-                            -this.parseNumero(nota.somme_ricevute_eur),
-                          )}
-                          {this.renderImportoRow(
-                            "Totale nota",
-                            totaleNota,
-                            true,
-                          )}
                         </div>,
                       )}
 
                       {this.renderSezione(
-                        "Allegato",
+                        "Allegati",
                         <div className="container-fluid px-0">
                           <div className="row">
-                            <div className="col-12 mb-3">
+                            <div className="col-12 col-lg-6 mb-3">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Allegato 1 (max 5MB)
-                                </Form.Label>
+                                <Form.Label>Allegato 1 (max 5MB)</Form.Label>
                                 <div className="d-flex align-items-center gap-2">
                                   <Form.Control
                                     type="file"
                                     accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                                    onChange={this.handleCambioAllegato}
-                                    style={this.inputStyle}
+                                    onChange={(evt) =>
+                                      this.handleCambioAllegato(1, evt)
+                                    }
                                   />
                                   {(nota.allegato1_nome_file ||
                                     this.state.fileAllegato1) && (
                                     <IconButton
                                       size="small"
-                                      title="Rimuovi allegato"
-                                      onClick={this.rimuoviAllegato}
+                                      title="Rimuovi allegato 1"
+                                      onClick={() => this.rimuoviAllegato(1)}
                                     >
                                       <ClearIcon fontSize="small" />
                                     </IconButton>
                                   )}
                                 </div>
-
                                 {nota.allegato1_nome_file && (
                                   <div
                                     style={{
@@ -1181,6 +1051,46 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                   >
                                     <AttachFileIcon fontSize="inherit" />
                                     {nota.allegato1_nome_file}
+                                  </div>
+                                )}
+                              </Form.Group>
+                            </div>
+
+                            <div className="col-12 col-lg-6 mb-3">
+                              <Form.Group>
+                                <Form.Label>Allegato 2 (max 5MB)</Form.Label>
+                                <div className="d-flex align-items-center gap-2">
+                                  <Form.Control
+                                    type="file"
+                                    accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                                    onChange={(evt) =>
+                                      this.handleCambioAllegato(2, evt)
+                                    }
+                                  />
+                                  {(nota.allegato2_nome_file ||
+                                    this.state.fileAllegato2) && (
+                                    <IconButton
+                                      size="small"
+                                      title="Rimuovi allegato 2"
+                                      onClick={() => this.rimuoviAllegato(2)}
+                                    >
+                                      <ClearIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
+                                </div>
+                                {nota.allegato2_nome_file && (
+                                  <div
+                                    style={{
+                                      marginTop: 6,
+                                      fontSize: 12,
+                                      color: "#475569",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 6,
+                                    }}
+                                  >
+                                    <AttachFileIcon fontSize="inherit" />
+                                    {nota.allegato2_nome_file}
                                   </div>
                                 )}
                               </Form.Group>
@@ -1203,12 +1113,10 @@ export default class CmpDettaglioNotaSpesa extends Component {
                           <div className="row">
                             <div className="col-12">
                               <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Annotazioni
-                                </Form.Label>
+                                <Form.Label>Annotazioni</Form.Label>
                                 <Form.Control
                                   as="textarea"
-                                  rows={7}
+                                  rows={6}
                                   value={nota.note_servizio || ""}
                                   onChange={(evt) =>
                                     this.cambioProprietaNotaSpesa(
@@ -1217,7 +1125,6 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                     )
                                   }
                                   placeholder="Note sulla nota spesa"
-                                  style={this.inputStyle}
                                 />
                               </Form.Group>
                             </div>

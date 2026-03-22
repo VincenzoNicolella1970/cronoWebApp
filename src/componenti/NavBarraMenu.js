@@ -26,6 +26,11 @@ import ScoreboardIcon from "@mui/icons-material/Scoreboard";
 import StadiumIcon from "@mui/icons-material/Stadium";
 import EuroSymbolIcon from "@mui/icons-material/EuroSymbol";
 import GroupIcon from "@mui/icons-material/Group";
+import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import PersonIcon from "@mui/icons-material/Person";
 
 import CmpConfermaAnnulla from "./utility/CmpConfermaAnnulla";
 
@@ -311,26 +316,87 @@ export default class NavBarraMenu extends Component {
             <DialogContent>
               <div className="container">
                 <div className="row">
-                  <div className="col-4">
+                  {/* FOTO + INFO BASE */}
+                  <div className="col-4 text-center">
                     <img
-                      alt=""
+                      alt="user"
                       src="User2.png"
-                      style={{ width: "100%", marginBottom: "10px" }}
+                      style={{
+                        width: "100%",
+                        maxWidth: "140px",
+                        borderRadius: "50%",
+                        border: "3px solid #dee2e6",
+                        marginBottom: "15px",
+                      }}
                     />
-                  </div>
-                  <div className="col-8">
-                    {/* <div className="row">
-                      USER ID : {this.context.ID.toString()}
-                    </div> */}
-                    <div className="row">
-                      USER :{" "}
-                      {this.context.user ? this.context.user : "Vincenzo"}
+
+                    <div style={{ fontWeight: "bold" }}>
+                      {this.context?.user?.display_name || "-"}
                     </div>
+
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#6c757d",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      {this.context?.user?.ruolo === "administrator" ? (
+                        <AdminPanelSettingsIcon sx={{ fontSize: 18 }} />
+                      ) : (
+                        <PersonIcon sx={{ fontSize: 18 }} />
+                      )}
+                      {this.context?.user?.ruolo || "-"}
+                    </div>
+                  </div>
+
+                  {/* DATI */}
+                  <div className="col-8">
+                    <div className="row mb-2">
+                      <div className="col-4 fw-bold">Username</div>
+                      <div className="col-8">
+                        {this.context?.user?.username || "-"}
+                      </div>
+                    </div>
+
+                    {/* EMAIL FULL WIDTH */}
+                    <div className="row mb-3">
+                      <div className="col-12 fw-bold">Email</div>
+                      <div className="col-12 text-break">
+                        {this.context?.user?.email || "-"}
+                      </div>
+                    </div>
+
+                    <div className="row mb-2">
+                      <div className="col-4 fw-bold">Nome</div>
+                      <div className="col-8">
+                        {this.context?.user?.first_name || "-"}
+                      </div>
+                    </div>
+
+                    <div className="row mb-2">
+                      <div className="col-4 fw-bold">Cognome</div>
+                      <div className="col-8">
+                        {this.context?.user?.last_name || "-"}
+                      </div>
+                    </div>
+
                     <div className="row">
-                      RUOLO :{" "}
-                      {this.context.ruolo
-                        ? this.context.ruolo
-                        : "Administrator"}
+                      <div className="col-4 fw-bold">Stato</div>
+                      <div className="col-8">
+                        <span
+                          className={`badge ${
+                            this.context?.user?.stato === "attivo"
+                              ? "bg-success"
+                              : "bg-secondary"
+                          }`}
+                        >
+                          {this.context?.user?.stato || "-"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -414,17 +480,18 @@ export default class NavBarraMenu extends Component {
                   &nbsp;Home
                 </Nav.Link>
 
+                <Nav.Link
+                  className="nkLink"
+                  href={process.env.PUBLIC_URL + "/Attivita"}
+                >
+                  &nbsp;
+                  <ScoreboardIcon />
+                  &nbsp;Attività
+                </Nav.Link>
+
                 {/* {this.context.ruolo === "Administrator" && ( */}
                 {this.context.ruolo.toLowerCase() === "administrator" && (
                   <>
-                    <Nav.Link
-                      className="nkLink"
-                      href={process.env.PUBLIC_URL + "/Attivita"}
-                    >
-                      &nbsp;
-                      <ScoreboardIcon />
-                      &nbsp;Attività
-                    </Nav.Link>
                     <Nav.Link
                       className="nkLink"
                       href={process.env.PUBLIC_URL + "/Gare"}
@@ -482,6 +549,17 @@ export default class NavBarraMenu extends Component {
                   <QuestionMarkIcon />
                   &nbsp;HelpDesk
                 </Nav.Link>
+
+                {this.context.ruolo.toLowerCase() === "administrator" && (
+                  <Nav.Link
+                    className="nkLink"
+                    href={process.env.PUBLIC_URL + "/Discipline"}
+                  >
+                    &nbsp;
+                    <SportsSoccerIcon />
+                    &nbsp;Discipline e Manifestazioni <EmojiEventsIcon />
+                  </Nav.Link>
+                )}
               </Nav>
             </Offcanvas.Body>
           </Navbar.Offcanvas>

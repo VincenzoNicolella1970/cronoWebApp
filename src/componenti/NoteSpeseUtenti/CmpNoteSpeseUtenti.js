@@ -3,6 +3,9 @@ import axios from "axios";
 
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
 import { DataGridPro } from "@mui/x-data-grid-pro";
 
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
@@ -81,23 +84,6 @@ export default class CmpNoteSpeseUtenti extends Component {
       });
   };
 
-  returnIconaStatoNotaSpesa = (stato) => {
-    switch ((stato || "").toUpperCase()) {
-      case "APPROVATA":
-        return <DoneAllIcon sx={{ color: "#0bc032" }} />;
-      case "INVIATA":
-        return <PublishedWithChangesIcon sx={{ color: "#1e88e5" }} />;
-      case "BOZZA":
-        return <PendingIcon sx={{ color: "#f3960b" }} />;
-      case "RESPINTA":
-        return <BlockIcon sx={{ color: "#dd1b25" }} />;
-      case "LIQUIDATA":
-        return <ModeIcon sx={{ color: "#7b1fa2" }} />;
-      default:
-        return <></>;
-    }
-  };
-
   calcolaTotale = (row) => {
     const autostrada = parseFloat(row.spese_autostrada_eur || 0);
     const sp1 = parseFloat(row.spesa1_eur || 0);
@@ -108,71 +94,193 @@ export default class CmpNoteSpeseUtenti extends Component {
 
   formattaImporto = (value) => {
     if (value === null || value === undefined || value === "") return "";
+
     return new Intl.NumberFormat("it-IT", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(parseFloat(value));
   };
 
+  formattaData = (value) => {
+    if (!value) return "";
+    return new Date(value).toLocaleDateString("it-IT");
+  };
+
+  returnChipStatoNotaSpesa = (stato) => {
+    switch ((stato || "").toUpperCase()) {
+      case "APPROVATA":
+        return (
+          <Chip
+            icon={<DoneAllIcon />}
+            label="Approvata"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#e8f7ed",
+              color: "#1f7a36",
+              "& .MuiChip-icon": { color: "#1f7a36" },
+            }}
+          />
+        );
+
+      case "INVIATA":
+        return (
+          <Chip
+            icon={<PublishedWithChangesIcon />}
+            label="Inviata"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#eaf2fd",
+              color: "#1e88e5",
+              "& .MuiChip-icon": { color: "#1e88e5" },
+            }}
+          />
+        );
+
+      case "BOZZA":
+        return (
+          <Chip
+            icon={<PendingIcon />}
+            label="Bozza"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#fff4e5",
+              color: "#b26a00",
+              "& .MuiChip-icon": { color: "#b26a00" },
+            }}
+          />
+        );
+
+      case "RESPINTA":
+        return (
+          <Chip
+            icon={<BlockIcon />}
+            label="Respinta"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#fdecec",
+              color: "#b42318",
+              "& .MuiChip-icon": { color: "#b42318" },
+            }}
+          />
+        );
+
+      case "LIQUIDATA":
+        return (
+          <Chip
+            icon={<ModeIcon />}
+            label="Liquidata"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#f3e8ff",
+              color: "#7b1fa2",
+              "& .MuiChip-icon": { color: "#7b1fa2" },
+            }}
+          />
+        );
+
+      default:
+        return <Chip label={stato || "-"} size="small" />;
+    }
+  };
+
   Colonne = [
     {
       field: "azioni",
       headerName: "",
-      width: 70,
+      width: 80,
       align: "center",
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
       renderCell: (param) => (
-        <Button
-          title="Apri dettaglio nota spesa"
-          className="styleButton"
-          style={{ height: "35px", minWidth: "35px" }}
-          onClick={() => this.getDettaglioNotaSpesa(param)}
-        >
-          <EditIcon fontSize="small" />
-        </Button>
+        <Tooltip title="Apri dettaglio nota spesa">
+          <Button
+            className="styleButton"
+            onClick={() => this.getDettaglioNotaSpesa(param)}
+            sx={{
+              minWidth: "36px",
+              width: "36px",
+              height: "36px",
+              borderRadius: "10px",
+              border: "1px solid #d0d5dd",
+              backgroundColor: "#ffffff",
+              color: "#344054",
+              boxShadow: "0 1px 2px rgba(16,24,40,0.05)",
+              "&:hover": {
+                backgroundColor: "#f9fafb",
+                borderColor: "#bfc6d4",
+              },
+            }}
+          >
+            <EditIcon fontSize="small" />
+          </Button>
+        </Tooltip>
       ),
     },
     {
       field: "utente",
       headerName: "UTENTE",
-      width: 220,
+      minWidth: 220,
+      flex: 1,
+      renderCell: (param) => (
+        <Box sx={{ fontWeight: 600, color: "#101828" }}>{param.row.utente}</Box>
+      ),
     },
     {
       field: "nome_gara",
       headerName: "GARA",
-      width: 240,
+      minWidth: 240,
+      flex: 1.3,
     },
     {
       field: "disciplina",
       headerName: "DISCIPLINA",
-      width: 120,
+      minWidth: 120,
+      flex: 0.8,
     },
     {
       field: "manifestazione",
       headerName: "MANIFEST.",
-      width: 170,
+      minWidth: 160,
+      flex: 0.9,
     },
     {
       field: "data_servizio",
       headerName: "DATA SERVIZIO",
-      width: 130,
-      align: "right",
-      valueFormatter: (value) =>
-        value ? new Date(value).toLocaleDateString("it-IT") : "",
+      minWidth: 130,
+      flex: 0.8,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (param) => this.formattaData(param.row.data_servizio),
     },
     {
       field: "totale_nota",
       headerName: "TOTALE",
-      width: 110,
+      minWidth: 110,
+      flex: 0.7,
       align: "right",
-      valueGetter: (value, row) => this.calcolaTotale(row),
-      valueFormatter: (value) => this.formattaImporto(value),
+      headerAlign: "right",
+      renderCell: (param) =>
+        this.formattaImporto(this.calcolaTotale(param.row)),
     },
     {
       field: "stato",
       headerName: "STATO",
-      width: 110,
+      minWidth: 140,
+      flex: 0.8,
       align: "center",
-      renderCell: (param) => this.returnIconaStatoNotaSpesa(param.row.stato),
+      headerAlign: "center",
+      renderCell: (param) => this.returnChipStatoNotaSpesa(param.row.stato),
     },
   ];
 
@@ -196,14 +304,48 @@ export default class CmpNoteSpeseUtenti extends Component {
 
   getIntestazione = () => {
     return (
-      <div className="container boxStyle">
-        <div className="row">
-          <div className="col-12 headerGrid">
-            <ReceiptLongIcon />
-            &nbsp;Gestione Note Spesa Utenti
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          borderRadius: "18px",
+          border: "1px solid #eaecf0",
+          background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+          boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
+        }}
+      >
+        <div className="row align-items-center">
+          <div className="col-12">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <Box
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "12px",
+                  backgroundColor: "#eef2ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#3949ab",
+                }}
+              >
+                <ReceiptLongIcon />
+              </Box>
+
+              <Box>
+                <Box
+                  sx={{ fontSize: "1rem", fontWeight: 700, color: "#101828" }}
+                >
+                  Gestione Note Spesa Utenti
+                </Box>
+                <Box sx={{ fontSize: "0.85rem", color: "#667085" }}>
+                  Consultazione e gestione amministrativa delle note spesa
+                </Box>
+              </Box>
+            </Box>
           </div>
         </div>
-      </div>
+      </Paper>
     );
   };
 
@@ -213,7 +355,7 @@ export default class CmpNoteSpeseUtenti extends Component {
         <div className="container">
           <div className="row rowNiko">
             <div className="col-12">
-              <Box sx={{ margin: "15px", height: "50px", width: "100%" }}>
+              <Box sx={{ margin: "15px 15px 10px 15px", width: "100%" }}>
                 {this.getIntestazione()}
               </Box>
             </div>
@@ -221,16 +363,84 @@ export default class CmpNoteSpeseUtenti extends Component {
 
           <div className="row rowNiko">
             <div className="col-12">
-              <Box sx={{ margin: "15px", height: "650px", width: "100%" }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  margin: "0 15px 15px 15px",
+                  p: 1.5,
+                  height: "650px",
+                  borderRadius: "18px",
+                  border: "1px solid #eaecf0",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 8px 24px rgba(16,24,40,0.06)",
+                }}
+              >
                 <DataGridPro
-                  sx={this.utilityCrono.returnSXDtaDrig()}
+                  sx={{
+                    border: "none",
+                    fontFamily: "Roboto, Arial, sans-serif",
+                    fontSize: "0.84rem",
+
+                    "& .MuiDataGrid-columnHeaders": {
+                      backgroundColor: "#f8fafc",
+                      color: "#344054",
+                      borderBottom: "1px solid #eaecf0",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                    },
+
+                    "& .MuiDataGrid-columnHeaderTitle": {
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                      letterSpacing: "0.03em",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                    },
+
+                    "& .MuiDataGrid-row": {
+                      borderBottom: "1px solid #f2f4f7",
+                      backgroundColor: "#ffffff",
+                    },
+
+                    "& .MuiDataGrid-row:nth-of-type(even)": {
+                      backgroundColor: "#fcfcfd",
+                    },
+
+                    "& .MuiDataGrid-row:hover": {
+                      backgroundColor: "#f5f8ff",
+                    },
+
+                    "& .MuiDataGrid-cell": {
+                      borderBottom: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      fontSize: "0.83rem",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      color: "#101828",
+                    },
+
+                    "& .MuiDataGrid-footerContainer": {
+                      borderTop: "1px solid #eaecf0",
+                      backgroundColor: "#fcfcfd",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+
+                    "& .MuiTablePagination-root": {
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+
+                    "& .MuiDataGrid-toolbarContainer": {
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+                  }}
                   initialState={{
                     pagination: {
                       paginationModel: { pageSize: 20, page: 0 },
                     },
                   }}
                   getRowId={(row) => row.id}
-                  rowHeight={40}
+                  rowHeight={46}
                   rows={this.state.elencoNoteSpesa}
                   columns={this.Colonne}
                   pagination
@@ -238,8 +448,21 @@ export default class CmpNoteSpeseUtenti extends Component {
                   disableRowSelectionOnClick
                   showToolbar
                   loading={this.state.caricamentoDati}
+                  slotProps={{
+                    loadingOverlay: {
+                      variant: "circular-progress",
+                      noRowsVariant: "circular-progress",
+                    },
+                    toolbar: {
+                      csvOptions: {
+                        fileName: "ExportDataNoteSpesaUtenti",
+                        delimiter: ";",
+                        utf8WithBom: true,
+                      },
+                    },
+                  }}
                 />
-              </Box>
+              </Paper>
             </div>
           </div>
         </div>

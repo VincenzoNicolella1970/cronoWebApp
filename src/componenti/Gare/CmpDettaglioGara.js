@@ -5,10 +5,13 @@ import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
@@ -24,11 +27,11 @@ import NotesIcon from "@mui/icons-material/Notes";
 import GroupIcon from "@mui/icons-material/Group";
 
 import CmpUtentiGara from "./CmpUtentiGare";
-
 import utilityCrono from "../utility/utilityCrono";
 
 export default class CmpDettaglioGara extends Component {
   utilityCrono = new utilityCrono();
+
   state = {
     intestazione: "",
     tabSelezionato: "1",
@@ -62,6 +65,13 @@ export default class CmpDettaglioGara extends Component {
     note: "",
   };
 
+  inputStyle = {
+    border: "2px solid #94a3b8",
+    borderRadius: "10px",
+    boxShadow: "none",
+    minHeight: "42px",
+  };
+
   componentDidUpdate = (prevProps) => {
     const dialogAppenaAperto =
       this.props.openDialog === true && prevProps.openDialog === false;
@@ -74,7 +84,6 @@ export default class CmpDettaglioGara extends Component {
           withCredentials: true,
         })
         .then((response) => {
-          //debugger;
           let gara = response.data.item ? response.data.item : response.data;
 
           if (Array.isArray(gara)) {
@@ -127,10 +136,7 @@ export default class CmpDettaglioGara extends Component {
   };
 
   handleClose = (event, reason) => {
-    if (reason && reason === "backdropClick") {
-      return;
-    }
-
+    if (reason && reason === "backdropClick") return;
     this.props.chiudiDettaglio(false);
   };
 
@@ -289,7 +295,6 @@ export default class CmpDettaglioGara extends Component {
 
   aggiornaGara = () => {
     const gara = this.state.garaSelezionata;
-
     const formValido = this.validaInteroForm();
 
     if (!formValido) {
@@ -301,7 +306,6 @@ export default class CmpDettaglioGara extends Component {
       return;
     }
 
-    //debugger;
     let urlApi = process.env.REACT_APP_API_URL;
     let endpoint =
       this.props.idGara === null ? "/gare/create.php" : "/gare/update.php";
@@ -323,15 +327,16 @@ export default class CmpDettaglioGara extends Component {
       })
       .catch((error) => {
         console.log("Errore salvataggio gara:", error);
-        let errori = error.response.data.fields;
+        let errori = error.response?.data?.fields || {};
         let messaggio = "";
         let key;
         for (key in errori) {
-          messaggio += key + ": " + errori[key];
+          messaggio += key + ": " + errori[key] + " ";
         }
         this.setState({
           severity: "error",
-          checkMessaggio: messaggio, //"Errore durante il salvataggio della gara.",
+          checkMessaggio:
+            messaggio || "Errore durante il salvataggio della gara.",
           avvisaOperazione: true,
         });
       });
@@ -346,6 +351,34 @@ export default class CmpDettaglioGara extends Component {
     if (evt.key === "Enter") evt.preventDefault();
   };
 
+  renderSezione = (titolo, children, extra = null) => (
+    <Paper
+      elevation={0}
+      sx={{
+        border: "1px solid #e2e8f0",
+        borderRadius: "16px",
+        p: 2,
+        mb: 2,
+        backgroundColor: "#fcfcfd",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 14,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ fontSize: 16, fontWeight: 700 }}>{titolo}</div>
+        {extra}
+      </div>
+      {children}
+    </Paper>
+  );
+
   render() {
     const gara = this.state.garaSelezionata;
     const elencoDiscipline = this.props.elencoDiscipline || [];
@@ -353,12 +386,6 @@ export default class CmpDettaglioGara extends Component {
     const elencoRegioni = this.props.elencoRegioni || [];
     const elencoProvince = this.props.elencoProvince || [];
     const elencoComuni = this.props.elencoComuni || [];
-
-    //debugger;
-    // console.log("gara.rif_regione", gara?.rif_regione);
-    // console.log("elencoProvince", elencoProvince.slice(0, 5));
-    // console.log("gara.rif_provincia", gara?.rif_provincia);
-    // console.log("elencoComuni", elencoComuni.slice(0, 5));
 
     const manifestazioniFiltrate = elencoManifestazioni.filter(
       (m) => String(m.rif_disciplina) === String(gara?.rif_disciplina || ""),
@@ -376,20 +403,78 @@ export default class CmpDettaglioGara extends Component {
       <div>
         {gara && (
           <Dialog
-            fullWidth={true}
-            maxWidth="md"
+            fullWidth
+            maxWidth="lg"
             disableEscapeKeyDown
             open={this.props.openDialog}
             onClose={this.handleClose}
           >
-            <DialogContent>
+            <DialogTitle sx={{ pb: 1 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 700 }}>
+                    {this.state.intestazione}
+                  </div>
+                  <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
+                    Gestione dati gara e assegnazioni
+                  </div>
+                </div>
+
+                <Chip
+                  label={gara.stato || "BOZZA"}
+                  sx={{
+                    color: "#fff",
+                    fontWeight: 700,
+                    backgroundColor:
+                      gara.stato === "PUBBLICATA"
+                        ? "#2e7d32"
+                        : gara.stato === "CHIUSA"
+                          ? "#6a1b9a"
+                          : "#1976d2",
+                  }}
+                />
+              </div>
+            </DialogTitle>
+
+            <DialogContent dividers sx={{ backgroundColor: "#f8fafc" }}>
               <Form onKeyDown={this.checkSubmit}>
                 <Box sx={{ width: "100%", typography: "body1" }}>
                   <TabContext value={this.state.tabSelezionato}>
-                    <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                    <Box sx={{ mb: 2 }}>
                       <TabList
                         onChange={this.handleTabsChange}
                         aria-label="Tabs Gara"
+                        sx={{
+                          minHeight: 48,
+                          "& .MuiTabs-flexContainer": {
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          },
+                          "& .MuiTab-root": {
+                            minHeight: 44,
+                            textTransform: "none",
+                            borderRadius: "12px",
+                            border: "1px solid #e2e8f0",
+                            backgroundColor: "#fff",
+                            fontWeight: 600,
+                          },
+                          "& .Mui-selected": {
+                            backgroundColor: "#eff6ff",
+                            color: "#1d4ed8 !important",
+                            borderColor: "#bfdbfe",
+                          },
+                          "& .MuiTabs-indicator": {
+                            display: "none",
+                          },
+                        }}
                       >
                         <Tab
                           icon={<EmojiEventsIcon />}
@@ -419,350 +504,376 @@ export default class CmpDettaglioGara extends Component {
                       </TabList>
                     </Box>
 
-                    <TabPanel value="1">
+                    <TabPanel value="1" sx={{ p: 0 }}>
                       <div
-                        //className="container"
                         className={
                           this.utilityCrono.defineIfIsAdministrator()
-                            ? "container "
+                            ? "container"
                             : "container disabledContent"
                         }
                       >
-                        <div className="row">
-                          <div className="col-12">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Nome gara*
-                              </Form.Label>
-                              <Form.Control
-                                className="textFieldnk"
-                                size="sm"
-                                type="text"
-                                value={gara.nome_gara || ""}
-                                onChange={(evt) =>
-                                  this.cambioProprietaGara(
-                                    "nome_gara",
-                                    evt.target.value,
-                                  )
-                                }
-                                isValid={!this.state.errorNomeGara}
-                                isInvalid={this.state.errorNomeGara}
-                                placeholder="Nome gara"
-                              />
-                            </Form.Group>
-                          </div>
-                        </div>
+                        {this.renderSezione(
+                          "Dati principali",
+                          <div className="row">
+                            <div className="col-12 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Nome gara *
+                                </Form.Label>
+                                <Form.Control
+                                  type="text"
+                                  value={gara.nome_gara || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaGara(
+                                      "nome_gara",
+                                      evt.target.value,
+                                    )
+                                  }
+                                  isValid={!this.state.errorNomeGara}
+                                  isInvalid={this.state.errorNomeGara}
+                                  placeholder="Nome gara"
+                                  style={this.inputStyle}
+                                />
+                              </Form.Group>
+                            </div>
 
-                        <div className="row">
-                          <div className="col-6">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Disciplina*
-                              </Form.Label>
-                              <Form.Select
-                                className="textFieldnk"
-                                size="sm"
-                                value={gara.rif_disciplina || ""}
-                                onChange={(evt) => {
-                                  this.cambioProprietaGaraMultipla({
-                                    rif_disciplina: evt.target.value,
-                                    rif_manifestazione: "",
-                                  });
-                                  this.validaCampo(
-                                    "rif_disciplina",
-                                    evt.target.value,
-                                  );
-                                  this.validaCampo("rif_manifestazione", "");
-                                }}
-                                isValid={!this.state.errorDisciplina}
-                                isInvalid={this.state.errorDisciplina}
-                              >
-                                <option value="">
-                                  Seleziona disciplina...
-                                </option>
-                                {elencoDiscipline.map((item) => (
-                                  <option key={item.id} value={item.id}>
-                                    {item.nome}
+                            <div className="col-12 col-md-6 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Disciplina *
+                                </Form.Label>
+                                <Form.Select
+                                  value={gara.rif_disciplina || ""}
+                                  onChange={(evt) => {
+                                    this.cambioProprietaGaraMultipla({
+                                      rif_disciplina: evt.target.value,
+                                      rif_manifestazione: "",
+                                    });
+                                    this.validaCampo(
+                                      "rif_disciplina",
+                                      evt.target.value,
+                                    );
+                                    this.validaCampo("rif_manifestazione", "");
+                                  }}
+                                  isValid={!this.state.errorDisciplina}
+                                  isInvalid={this.state.errorDisciplina}
+                                  style={this.inputStyle}
+                                >
+                                  <option value="">
+                                    Seleziona disciplina...
                                   </option>
-                                ))}
-                              </Form.Select>
-                            </Form.Group>
-                          </div>
+                                  {elencoDiscipline.map((item) => (
+                                    <option key={item.id} value={item.id}>
+                                      {item.nome}
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                              </Form.Group>
+                            </div>
 
-                          <div className="col-6">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Manifestazione*
-                              </Form.Label>
-                              <Form.Select
-                                className="textFieldnk"
-                                size="sm"
-                                value={gara.rif_manifestazione || ""}
-                                onChange={(evt) =>
-                                  this.cambioProprietaGara(
-                                    "rif_manifestazione",
-                                    evt.target.value,
-                                  )
-                                }
-                                isValid={!this.state.errorManifestazione}
-                                isInvalid={this.state.errorManifestazione}
-                                disabled={!gara.rif_disciplina}
-                              >
-                                <option value="">
-                                  Seleziona manifestazione...
-                                </option>
-                                {manifestazioniFiltrate.map((item) => (
-                                  <option key={item.id} value={item.id}>
-                                    {item.nome}
+                            <div className="col-12 col-md-6 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Manifestazione *
+                                </Form.Label>
+                                <Form.Select
+                                  value={gara.rif_manifestazione || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaGara(
+                                      "rif_manifestazione",
+                                      evt.target.value,
+                                    )
+                                  }
+                                  isValid={!this.state.errorManifestazione}
+                                  isInvalid={this.state.errorManifestazione}
+                                  disabled={!gara.rif_disciplina}
+                                  style={this.inputStyle}
+                                >
+                                  <option value="">
+                                    Seleziona manifestazione...
                                   </option>
-                                ))}
-                              </Form.Select>
-                            </Form.Group>
-                          </div>
-                        </div>
+                                  {manifestazioniFiltrate.map((item) => (
+                                    <option key={item.id} value={item.id}>
+                                      {item.nome}
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                              </Form.Group>
+                            </div>
 
-                        <div className="row">
-                          <div className="col-4">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Data inizio*
-                              </Form.Label>
-                              <Form.Control
-                                className="textFieldnk"
-                                size="sm"
-                                type="date"
-                                value={gara.data_inizio || ""}
-                                onChange={(evt) =>
-                                  this.cambioProprietaGara(
-                                    "data_inizio",
-                                    evt.target.value,
-                                  )
-                                }
-                                isValid={!this.state.errorDataInizio}
-                                isInvalid={this.state.errorDataInizio}
-                              />
-                            </Form.Group>
-                          </div>
+                            <div className="col-12 col-md-4 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Data inizio *
+                                </Form.Label>
+                                <Form.Control
+                                  type="date"
+                                  value={gara.data_inizio || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaGara(
+                                      "data_inizio",
+                                      evt.target.value,
+                                    )
+                                  }
+                                  isValid={!this.state.errorDataInizio}
+                                  isInvalid={this.state.errorDataInizio}
+                                  style={this.inputStyle}
+                                />
+                              </Form.Group>
+                            </div>
 
-                          <div className="col-4">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Data fine
-                              </Form.Label>
-                              <Form.Control
-                                className="textFieldnk"
-                                size="sm"
-                                type="date"
-                                value={gara.data_fine || ""}
-                                onChange={(evt) =>
-                                  this.cambioProprietaGara(
-                                    "data_fine",
-                                    evt.target.value,
-                                  )
-                                }
-                              />
-                            </Form.Group>
-                          </div>
+                            <div className="col-12 col-md-4 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Data fine
+                                </Form.Label>
+                                <Form.Control
+                                  type="date"
+                                  value={gara.data_fine || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaGara(
+                                      "data_fine",
+                                      evt.target.value,
+                                    )
+                                  }
+                                  style={this.inputStyle}
+                                />
+                              </Form.Group>
+                            </div>
 
-                          <div className="col-4">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Stato*
-                              </Form.Label>
-                              <Form.Select
-                                className="textFieldnk"
-                                size="sm"
-                                value={gara.stato || ""}
-                                onChange={(evt) =>
-                                  this.cambioProprietaGara(
-                                    "stato",
-                                    evt.target.value,
-                                  )
-                                }
-                                isValid={!this.state.errorStato}
-                                isInvalid={this.state.errorStato}
-                              >
-                                <option value="">Seleziona stato...</option>
-                                <option value="BOZZA">BOZZA</option>
-                                <option value="PUBBLICATA">PUBBLICATA</option>
-                                <option value="CHIUSA">CHIUSA</option>
-                              </Form.Select>
-                            </Form.Group>
-                          </div>
-                        </div>
+                            <div className="col-12 col-md-4 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Stato *
+                                </Form.Label>
+                                <Form.Select
+                                  value={gara.stato || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaGara(
+                                      "stato",
+                                      evt.target.value,
+                                    )
+                                  }
+                                  isValid={!this.state.errorStato}
+                                  isInvalid={this.state.errorStato}
+                                  style={this.inputStyle}
+                                >
+                                  <option value="">Seleziona stato...</option>
+                                  <option value="BOZZA">BOZZA</option>
+                                  <option value="PUBBLICATA">PUBBLICATA</option>
+                                  <option value="CHIUSA">CHIUSA</option>
+                                </Form.Select>
+                              </Form.Group>
+                            </div>
+                          </div>,
+                          <Chip
+                            icon={<EmojiEventsIcon />}
+                            label="Gara"
+                            variant="outlined"
+                            sx={{ fontWeight: 600 }}
+                          />,
+                        )}
                       </div>
                     </TabPanel>
 
-                    <TabPanel value="2">
+                    <TabPanel value="2" sx={{ p: 0 }}>
                       <div
-                        //className="container"
                         className={
                           this.utilityCrono.defineIfIsAdministrator()
-                            ? "container "
+                            ? "container"
                             : "container disabledContent"
                         }
                       >
-                        <div className="row">
-                          <div className="col-4">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Regione*
-                              </Form.Label>
-                              <Form.Select
-                                className="textFieldnk"
-                                size="sm"
-                                value={gara.rif_regione || ""}
-                                onChange={(evt) => {
-                                  this.cambioProprietaGaraMultipla({
-                                    rif_regione: evt.target.value,
-                                    rif_provincia: "",
-                                    rif_comune: "",
-                                  });
-                                  this.validaCampo(
-                                    "rif_regione",
-                                    evt.target.value,
-                                  );
-                                  this.validaCampo("rif_provincia", "");
-                                  this.validaCampo("rif_comune", "");
-                                }}
-                                isValid={!this.state.errorRegione}
-                                isInvalid={this.state.errorRegione}
-                              >
-                                <option value="">Seleziona regione...</option>
-                                {elencoRegioni.map((item) => (
-                                  <option
-                                    key={item.codice_regione}
-                                    value={item.codice_regione}
-                                  >
-                                    {item.nome}
-                                  </option>
-                                ))}
-                              </Form.Select>
-                            </Form.Group>
-                          </div>
+                        {this.renderSezione(
+                          "Località",
+                          <div className="row">
+                            <div className="col-12 col-md-4 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Regione *
+                                </Form.Label>
+                                <Form.Select
+                                  value={gara.rif_regione || ""}
+                                  onChange={(evt) => {
+                                    this.cambioProprietaGaraMultipla({
+                                      rif_regione: evt.target.value,
+                                      rif_provincia: "",
+                                      rif_comune: "",
+                                    });
+                                    this.validaCampo(
+                                      "rif_regione",
+                                      evt.target.value,
+                                    );
+                                    this.validaCampo("rif_provincia", "");
+                                    this.validaCampo("rif_comune", "");
+                                  }}
+                                  isValid={!this.state.errorRegione}
+                                  isInvalid={this.state.errorRegione}
+                                  style={this.inputStyle}
+                                >
+                                  <option value="">Seleziona regione...</option>
+                                  {elencoRegioni.map((item) => (
+                                    <option
+                                      key={item.codice_regione}
+                                      value={item.codice_regione}
+                                    >
+                                      {item.nome}
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                              </Form.Group>
+                            </div>
 
-                          <div className="col-4">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Provincia*
-                              </Form.Label>
-                              <Form.Select
-                                className="textFieldnk"
-                                size="sm"
-                                value={gara.rif_provincia || ""}
-                                onChange={(evt) => {
-                                  this.cambioProprietaGaraMultipla({
-                                    rif_provincia: evt.target.value,
-                                    rif_comune: "",
-                                  });
-                                  this.validaCampo(
-                                    "rif_provincia",
-                                    evt.target.value,
-                                  );
-                                  this.validaCampo("rif_comune", "");
-                                }}
-                                isValid={!this.state.errorProvincia}
-                                isInvalid={this.state.errorProvincia}
-                                disabled={!gara.rif_regione}
-                              >
-                                <option value="">Seleziona provincia...</option>
-                                {provinceFiltrate.map((item) => (
-                                  <option
-                                    key={item.codice_provincia}
-                                    value={item.codice_provincia}
-                                  >
-                                    {item.nome}
+                            <div className="col-12 col-md-4 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Provincia *
+                                </Form.Label>
+                                <Form.Select
+                                  value={gara.rif_provincia || ""}
+                                  onChange={(evt) => {
+                                    this.cambioProprietaGaraMultipla({
+                                      rif_provincia: evt.target.value,
+                                      rif_comune: "",
+                                    });
+                                    this.validaCampo(
+                                      "rif_provincia",
+                                      evt.target.value,
+                                    );
+                                    this.validaCampo("rif_comune", "");
+                                  }}
+                                  isValid={!this.state.errorProvincia}
+                                  isInvalid={this.state.errorProvincia}
+                                  disabled={!gara.rif_regione}
+                                  style={this.inputStyle}
+                                >
+                                  <option value="">
+                                    Seleziona provincia...
                                   </option>
-                                ))}
-                              </Form.Select>
-                            </Form.Group>
-                          </div>
+                                  {provinceFiltrate.map((item) => (
+                                    <option
+                                      key={item.codice_provincia}
+                                      value={item.codice_provincia}
+                                    >
+                                      {item.nome}
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                              </Form.Group>
+                            </div>
 
-                          <div className="col-4">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Comune*
-                              </Form.Label>
-                              <Form.Select
-                                className="textFieldnk"
-                                size="sm"
-                                value={gara.rif_comune || ""}
-                                onChange={(evt) =>
-                                  this.cambioProprietaGara(
-                                    "rif_comune",
-                                    evt.target.value,
-                                  )
-                                }
-                                isValid={!this.state.errorComune}
-                                isInvalid={this.state.errorComune}
-                                disabled={!gara.rif_provincia}
-                              >
-                                <option value="">Seleziona comune...</option>
-                                {comuniFiltrati.map((item) => (
-                                  <option
-                                    key={item.codice_comune}
-                                    value={item.codice_comune}
-                                  >
-                                    {item.nome}
-                                  </option>
-                                ))}
-                              </Form.Select>
-                            </Form.Group>
-                          </div>
-                        </div>
+                            <div className="col-12 col-md-4 mb-3">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Comune *
+                                </Form.Label>
+                                <Form.Select
+                                  value={gara.rif_comune || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaGara(
+                                      "rif_comune",
+                                      evt.target.value,
+                                    )
+                                  }
+                                  isValid={!this.state.errorComune}
+                                  isInvalid={this.state.errorComune}
+                                  disabled={!gara.rif_provincia}
+                                  style={this.inputStyle}
+                                >
+                                  <option value="">Seleziona comune...</option>
+                                  {comuniFiltrati.map((item) => (
+                                    <option
+                                      key={item.codice_comune}
+                                      value={item.codice_comune}
+                                    >
+                                      {item.nome}
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                              </Form.Group>
+                            </div>
+                          </div>,
+                          <Chip
+                            icon={<PlaceIcon />}
+                            label="Territorio"
+                            variant="outlined"
+                            sx={{ fontWeight: 600 }}
+                          />,
+                        )}
                       </div>
                     </TabPanel>
 
-                    <TabPanel value="3">
+                    <TabPanel value="3" sx={{ p: 0 }}>
                       <div
-                        //className="container"
                         className={
                           this.utilityCrono.defineIfIsAdministrator()
-                            ? "container "
+                            ? "container"
                             : "container disabledContent"
                         }
                       >
-                        <div className="row">
-                          <div className="col-12">
-                            <Form.Group className="mb-3">
-                              <Form.Label className="labelFieldnk">
-                                Note
-                              </Form.Label>
-                              <Form.Control
-                                as="textarea"
-                                rows={5}
-                                className="textFieldnk"
-                                value={gara.note || ""}
-                                onChange={(evt) =>
-                                  this.cambioProprietaGara(
-                                    "note",
-                                    evt.target.value,
-                                  )
-                                }
-                                placeholder="Note sulla gara"
-                              />
-                            </Form.Group>
-                          </div>
-                        </div>
+                        {this.renderSezione(
+                          "Note e stato",
+                          <div className="row">
+                            <div className="col-12">
+                              <Form.Group>
+                                <Form.Label style={{ fontWeight: 600 }}>
+                                  Note
+                                </Form.Label>
+                                <Form.Control
+                                  as="textarea"
+                                  rows={6}
+                                  value={gara.note || ""}
+                                  onChange={(evt) =>
+                                    this.cambioProprietaGara(
+                                      "note",
+                                      evt.target.value,
+                                    )
+                                  }
+                                  placeholder="Note sulla gara"
+                                  style={this.inputStyle}
+                                />
+                              </Form.Group>
+                            </div>
+                          </div>,
+                          <Chip
+                            icon={<NotesIcon />}
+                            label="Annotazioni"
+                            variant="outlined"
+                            sx={{ fontWeight: 600 }}
+                          />,
+                        )}
                       </div>
                     </TabPanel>
 
-                    <TabPanel value="4">
-                      <CmpUtentiGara idGara={gara.id_gara} />
+                    <TabPanel value="4" sx={{ p: 0 }}>
+                      {this.renderSezione(
+                        "Assegnazione utenti",
+                        <CmpUtentiGara idGara={gara.id_gara} />,
+                        <Chip
+                          icon={<GroupIcon />}
+                          label="Utenti"
+                          variant="outlined"
+                          sx={{ fontWeight: 600 }}
+                        />,
+                      )}
                     </TabPanel>
                   </TabContext>
                 </Box>
               </Form>
             </DialogContent>
 
-            <DialogActions>
-              <Button className="styleButton" onClick={this.handleClose}>
-                <ClearIcon /> Annulla
+            <DialogActions
+              sx={{ px: 3, py: 2, justifyContent: "space-between" }}
+            >
+              <Button onClick={this.handleClose}>
+                <ClearIcon />
+                &nbsp;Annulla
               </Button>
 
               {this.utilityCrono.defineIfIsAdministrator() && (
-                <Button className="styleButton" onClick={this.aggiornaGara}>
-                  <CheckIcon /> Conferma
+                <Button onClick={this.aggiornaGara} variant="contained">
+                  <CheckIcon />
+                  &nbsp;Conferma
                 </Button>
               )}
             </DialogActions>

@@ -12,6 +12,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
+import Divider from "@mui/material/Divider";
 
 import Form from "react-bootstrap/Form";
 
@@ -20,7 +21,6 @@ import ClearIcon from "@mui/icons-material/Clear";
 import SaveIcon from "@mui/icons-material/Save";
 import CalculateIcon from "@mui/icons-material/Calculate";
 import EuroIcon from "@mui/icons-material/Euro";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 
 import CmpAllegatoViewer from "./CmpAllegatoViewer";
 
@@ -45,13 +45,6 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
     importoKmPercorsi: "",
     importoForfettario: "",
     totaleRicalcolatoAdmin: "",
-  };
-
-  inputStyle = {
-    border: "2px solid #94a3b8",
-    borderRadius: "10px",
-    boxShadow: "none",
-    minHeight: "42px",
   };
 
   componentDidUpdate(prevProps) {
@@ -605,13 +598,12 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
       <div className="row align-items-end">
         <div className="col-12 col-lg-3 mb-3">
           <Form.Group>
-            <Form.Label style={{ fontWeight: 600 }}>{coeffLabel}</Form.Label>
+            <Form.Label>{coeffLabel}</Form.Label>
             <Form.Control
               type="number"
               step="0.01"
               value={coeffValue}
               onChange={(e) => onCoeffChange(e.target.value)}
-              style={{ ...this.inputStyle, textAlign: "right" }}
             />
           </Form.Group>
         </div>
@@ -624,13 +616,12 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
 
         <div className="col-12 col-lg-3 mb-3">
           <Form.Group>
-            <Form.Label style={{ fontWeight: 600 }}>{quantitaLabel}</Form.Label>
+            <Form.Label>{quantitaLabel}</Form.Label>
             <Form.Control
               type="number"
               step="0.01"
               value={quantitaValue}
               onChange={(e) => onQuantitaChange(e.target.value)}
-              style={{ ...this.inputStyle, textAlign: "right" }}
             />
           </Form.Group>
         </div>
@@ -643,14 +634,13 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
 
         <div className="col-12 col-lg-4 mb-3">
           <Form.Group>
-            <Form.Label style={{ fontWeight: 600 }}>{totalLabel}</Form.Label>
+            <Form.Label>{totalLabel}</Form.Label>
             <Form.Control
               type="number"
               step="0.01"
               value={totalValue}
               onChange={(e) => totalEditable && onTotalChange(e.target.value)}
               readOnly={!totalEditable}
-              style={{ ...this.inputStyle, textAlign: "right" }}
             />
           </Form.Group>
         </div>
@@ -717,31 +707,177 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                   "Dati generali",
                   <div className="container-fluid px-0">
                     <div className="row">
-                      {this.renderFieldInline("Utente", nota.utente)}
-                      {this.renderFieldInline("Gara", nota.nome_gara)}
+                      <div className="col-12 col-md-4 mb-3">
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Utente
+                        </div>
+                        <div
+                          style={{
+                            minHeight: 42,
+                            padding: "10px 12px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10,
+                            background: "#fff",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {nota.utente || "-"}
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-md-8 mb-3">
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Gara
+                        </div>
+                        <div
+                          style={{
+                            minHeight: 42,
+                            padding: "10px 12px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10,
+                            background: "#fff",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {nota.nome_gara || "-"}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="row">
-                      {this.renderFieldInline("Disciplina", nota.disciplina)}
-                      {this.renderFieldInline(
-                        "Manifestazione",
-                        nota.manifestazione,
-                      )}
+                      <div className="col-12 col-md-4 mb-3">
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Disciplina
+                        </div>
+                        <div
+                          style={{
+                            minHeight: 42,
+                            padding: "10px 12px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10,
+                            background: "#fff",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {nota.disciplina || "-"}
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-md-8 mb-3">
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Manifestazione
+                        </div>
+                        <div
+                          style={{
+                            minHeight: 42,
+                            padding: "10px 12px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10,
+                            background: "#fff",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {nota.manifestazione || "-"}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="row">
-                      {this.renderFieldInline(
-                        "Comune",
-                        nota.comune || nota.nome_comune,
-                      )}
-                      {this.renderFieldInline(
-                        "Provincia",
-                        nota.provincia || nota.nome_provincia,
-                      )}
-                      {this.renderFieldInline(
-                        "Regione",
-                        nota.regione || nota.nome_regione,
-                      )}
+                      <div className="col-12 col-md-4 mb-3">
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Comune
+                        </div>
+                        <div
+                          style={{
+                            minHeight: 42,
+                            padding: "10px 12px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10,
+                            background: "#fff",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {nota.comune || nota.nome_comune || "-"}
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-md-4 mb-3">
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Provincia
+                        </div>
+                        <div
+                          style={{
+                            minHeight: 42,
+                            padding: "10px 12px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10,
+                            background: "#fff",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {nota.provincia || nota.nome_provincia || "-"}
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-md-4 mb-3">
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Regione
+                        </div>
+                        <div
+                          style={{
+                            minHeight: 42,
+                            padding: "10px 12px",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10,
+                            background: "#fff",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {nota.regione || nota.nome_regione || "-"}
+                        </div>
+                      </div>
                     </div>
                   </div>,
                 )}
@@ -766,9 +902,7 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
 
                       <div className="col-12 col-md-6 col-lg-3 mb-3">
                         <Form.Group>
-                          <Form.Label style={{ fontWeight: 600 }}>
-                            Ore extra oltre 4h
-                          </Form.Label>
+                          <Form.Label>Ore extra oltre 4h</Form.Label>
                           <Form.Control
                             type="number"
                             step="0.01"
@@ -778,7 +912,6 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                                 e.target.value,
                               )
                             }
-                            style={{ ...this.inputStyle, textAlign: "right" }}
                           />
                           <div
                             style={{
@@ -848,11 +981,7 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                         )
                       : null}
                     {this.renderImportoRow(
-                      `Somme ricevute${
-                        nota.somme_ricevute_da
-                          ? " da " + nota.somme_ricevute_da
-                          : ""
-                      }`,
+                      `Somme ricevute${nota.somme_ricevute_da ? " da " + nota.somme_ricevute_da : ""}`,
                       -this.parseNumero(nota.somme_ricevute_eur),
                     )}
                     {this.renderImportoRow(
@@ -920,22 +1049,17 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                       <div className="row align-items-end">
                         <div className="col-12 col-lg-8 mb-3">
                           <Form.Group>
-                            <Form.Label style={{ fontWeight: 600 }}>
-                              Descrizione
-                            </Form.Label>
+                            <Form.Label>Descrizione</Form.Label>
                             <Form.Control
                               value="Importo forfettario riconosciuto"
                               readOnly
-                              style={this.inputStyle}
                             />
                           </Form.Group>
                         </div>
 
                         <div className="col-12 col-lg-4 mb-3">
                           <Form.Group>
-                            <Form.Label style={{ fontWeight: 600 }}>
-                              Totale €
-                            </Form.Label>
+                            <Form.Label>Totale €</Form.Label>
                             <Form.Control
                               type="number"
                               step="0.01"
@@ -946,10 +1070,6 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                                   e.target.value,
                                 )
                               }
-                              style={{
-                                ...this.inputStyle,
-                                textAlign: "right",
-                              }}
                             />
                           </Form.Group>
                         </div>
@@ -1037,11 +1157,6 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                       <div>Nessun allegato</div>
                     )}
                   </div>,
-                  <Chip
-                    icon={<ReceiptLongIcon />}
-                    label="Documenti"
-                    variant="outlined"
-                  />,
                 )}
 
                 {this.renderSezione(
@@ -1049,9 +1164,7 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <Form.Group>
-                        <Form.Label style={{ fontWeight: 600 }}>
-                          Nuovo stato
-                        </Form.Label>
+                        <Form.Label>Nuovo stato</Form.Label>
                         {statiDisponibili.length === 0 ? (
                           <div style={{ padding: "8px 0", fontWeight: 600 }}>
                             Stato non più modificabile
@@ -1062,7 +1175,6 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                             onChange={(e) =>
                               this.setState({ nuovoStato: e.target.value })
                             }
-                            style={this.inputStyle}
                           >
                             <option value={nota.stato}>{nota.stato}</option>
                             {statiDisponibili.map((s) => (

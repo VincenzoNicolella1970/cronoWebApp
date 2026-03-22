@@ -17,7 +17,9 @@ import CmpNotaSpese from "./componenti/NotaSpese/CmpNotaSpese";
 
 import CmpLoginDevelopment from "./componenti/OAuth/CmpLoginDevelopment";
 import CmpNoteSpeseUtenti from "./componenti/NoteSpeseUtenti/CmpNoteSpeseUtenti";
-
+import CmpDiscipline from "./componenti/Discipline/CmpDiscipline";
+import CmpManifestazioni from "./componenti/Discipline/CmpManifestazioni";
+import CmpDisciplineManifestazioni from "./componenti/Discipline/CmpDisciplineManifestazioni";
 function App() {
   const { ruolo } = useAuth();
 
@@ -54,17 +56,17 @@ function App() {
                 </>
               }
             />
+            <Route
+              path="/Attivita"
+              element={
+                <>
+                  <NavBarraMenu />
+                  <CmpAttivita />
+                </>
+              }
+            />
             {ruolo === "administrator" && (
               <>
-                <Route
-                  path="/Attivita"
-                  element={
-                    <>
-                      <NavBarraMenu />
-                      <CmpAttivita />
-                    </>
-                  }
-                />
                 <Route
                   path="/NoteSpeseUtenti"
                   element={
@@ -74,6 +76,34 @@ function App() {
                     </>
                   }
                 />
+                <Route
+                  path="/Discipline"
+                  element={
+                    <>
+                      <NavBarraMenu />
+                      <CmpDisciplineManifestazioni />
+                    </>
+                  }
+                />
+
+                {/* <Route
+                  path="/Discipline"
+                  element={
+                    <>
+                      <NavBarraMenu />
+                      <CmpDiscipline />
+                    </>
+                  }
+                />
+                <Route
+                  path="/Manifestazioni"
+                  element={
+                    <>
+                      <NavBarraMenu />
+                      <CmpManifestazioni />
+                    </>
+                  }
+                /> */}
               </>
             )}
             <Route

@@ -3,15 +3,17 @@ import axios from "axios";
 
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
+
 import { DataGridPro } from "@mui/x-data-grid-pro";
 
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import EditRoadIcon from "@mui/icons-material/EditRoad";
 import EditIcon from "@mui/icons-material/Edit";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import PublishedWithChangesIcon from "@mui/icons-material/PublishedWithChanges";
-import ModeIcon from "@mui/icons-material/Mode";
 import BlockIcon from "@mui/icons-material/Block";
 import PendingIcon from "@mui/icons-material/Pending";
 
@@ -78,17 +80,12 @@ export default class CmpGare extends Component {
     this.setState({ caricamentoDati: true });
 
     let urlApi = process.env.REACT_APP_API_URL;
-
-    //debugger;
     let urlQueryApi = "/gare/list.php";
-    // if (!this.utilityCrono.defineIfIsAdministrator()) {
-    //   urlQueryApi = "/gare/list.php?id=" + sessionStorage["ID"];
-    // }
 
-    //debugger;
     let myBody = !this.utilityCrono.defineIfIsAdministrator()
       ? JSON.stringify({ id: sessionStorage["ID"] })
       : null;
+
     axios
       .post(urlApi + urlQueryApi, myBody, { withCredentials: true })
       .then((response) => {
@@ -112,126 +109,217 @@ export default class CmpGare extends Component {
     this.getElencoGare();
   };
 
-  returnIconaStatoGara = (stato) => {
+  formattaData = (valore) => {
+    if (!valore) return "";
+    return new Date(valore).toLocaleDateString("it-IT");
+  };
+
+  getChipStatoGara = (stato) => {
     switch (stato) {
       case "PUBBLICATA":
         return (
-          <i title={stato}>
-            <PublishedWithChangesIcon sx={{ color: "#0bc032" }} />
-          </i>
+          <Chip
+            icon={<PublishedWithChangesIcon />}
+            label="Pubblicata"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#e8f7ed",
+              color: "#1f7a36",
+              "& .MuiChip-icon": { color: "#1f7a36" },
+            }}
+          />
         );
-        break;
+
       case "BOZZA":
         return (
-          <i title={stato}>
-            <PendingIcon sx={{ color: "#f3960b" }} />
-          </i>
+          <Chip
+            icon={<PendingIcon />}
+            label="Bozza"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#fff4e5",
+              color: "#b26a00",
+              "& .MuiChip-icon": { color: "#b26a00" },
+            }}
+          />
         );
-        break;
+
       case "CHIUSA":
         return (
-          <i title={stato}>
-            <BlockIcon sx={{ color: "#dd1b25" }} />
-          </i>
+          <Chip
+            icon={<BlockIcon />}
+            label="Chiusa"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#fdecec",
+              color: "#b42318",
+              "& .MuiChip-icon": { color: "#b42318" },
+            }}
+          />
         );
-        break;
+
+      default:
+        return <Chip label={stato || "-"} size="small" />;
     }
-    return <></>;
+  };
+
+  getBadgeAssegnazione = (numUtenti) => {
+    const valore = parseInt(numUtenti, 10);
+
+    if (!valore) {
+      return (
+        <Box
+          sx={{
+            px: 1.2,
+            py: 0.5,
+            borderRadius: "999px",
+            backgroundColor: "#fff4e5",
+            color: "#b26a00",
+            fontWeight: 600,
+            fontSize: "0.78rem",
+            display: "inline-block",
+          }}
+        >
+          Gara non assegnata
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        sx={{
+          px: 1.2,
+          py: 0.5,
+          borderRadius: "999px",
+          backgroundColor: "#e8f7ed",
+          color: "#1f7a36",
+          fontWeight: 600,
+          fontSize: "0.78rem",
+          display: "inline-block",
+        }}
+      >
+        Assegnata a {valore}
+      </Box>
+    );
   };
 
   Colonne = [
     {
       field: "azioni",
       headerName: "",
-      width: 70,
+      width: 80,
       align: "center",
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
       renderCell: (param) => {
         return (
-          <Button
-            title="Apri dettaglio gara"
-            className="styleButton"
-            style={{ height: "35px", minWidth: "35px" }}
-            onClick={() => this.getDettaglioGara(param)}
-          >
-            <EditIcon fontSize="small" />
-          </Button>
+          <Tooltip title="Apri dettaglio gara">
+            <Button
+              className="styleButton"
+              onClick={() => this.getDettaglioGara(param)}
+              sx={{
+                minWidth: "36px",
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                border: "1px solid #d0d5dd",
+                backgroundColor: "#ffffff",
+                color: "#344054",
+                boxShadow: "0 1px 2px rgba(16,24,40,0.05)",
+                "&:hover": {
+                  backgroundColor: "#f9fafb",
+                  borderColor: "#bfc6d4",
+                },
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </Button>
+          </Tooltip>
         );
       },
     },
-    //{ field: "id_gara", headerName: "ID", width: 80, align: "center" },
-    { field: "nome_gara", headerName: "NOME GARA", width: 260 },
+    {
+      field: "nome_gara",
+      headerName: "NOME GARA",
+      flex: 1.3,
+      minWidth: 240,
+      renderCell: (param) => (
+        <Box sx={{ fontWeight: 600, color: "#101828" }}>
+          {param.row.nome_gara}
+        </Box>
+      ),
+    },
     {
       field: "desc_disciplina",
       headerName: "DISCIPLINA",
-      width: 110,
-      //align: "center",
+      flex: 0.8,
+      minWidth: 130,
     },
     {
       field: "desc_manifestazione",
       headerName: "MANIFEST.",
-      width: 120,
-      //align: "center",
+      flex: 0.9,
+      minWidth: 140,
     },
     {
       field: "assegnata_a_num_ut",
-      headerName: "ASSEGNATA A",
-      width: 150,
+      headerName: "ASSEGNAZIONE",
+      flex: 1,
+      minWidth: 180,
       align: "center",
-      renderCell: (param) => {
-        return parseInt(param.row.assegnata_a_num_ut) == 0 ? (
-          <div style={{ background: "#eea60a", borderRadius: "5px" }}>
-            Gara non assegnata
-          </div>
-        ) : (
-          <div style={{ background: "#0aaf2e", borderRadius: "5px" }}>
-            Assegnata a <b>{param.row.assegnata_a_num_ut}</b>
-          </div>
-        );
-      },
+      headerAlign: "center",
+      renderCell: (param) =>
+        this.getBadgeAssegnazione(param.row.assegnata_a_num_ut),
     },
     {
       field: "stato",
       headerName: "STATO",
-      width: 110,
+      flex: 0.8,
+      minWidth: 140,
       align: "center",
-      renderCell: (param) => {
-        return this.returnIconaStatoGara(param.row.stato);
-      },
+      headerAlign: "center",
+      renderCell: (param) => this.getChipStatoGara(param.row.stato),
     },
-    // {
-    //   field: "desc_regione",
-    //   headerName: "REGIONE",
-    //   width: 90,
-    //   //align: "center",
-    // },
     {
       field: "desc_provincia",
       headerName: "PROVINCIA",
-      width: 100,
-      //align: "center",
+      flex: 0.7,
+      minWidth: 110,
     },
-    { field: "desc_comune", headerName: "COMUNE", width: 100, align: "left" },
+    {
+      field: "desc_comune",
+      headerName: "COMUNE",
+      flex: 0.9,
+      minWidth: 130,
+    },
     {
       field: "data_inizio",
       headerName: "DATA INIZIO",
-      width: 120,
-      align: "right",
-      valueFormatter: (value) =>
-        value ? new Date(value).toLocaleDateString("it-IT") : "",
+      flex: 0.75,
+      minWidth: 120,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (param) => this.formattaData(param.row.data_inizio),
     },
     {
       field: "data_fine",
       headerName: "DATA FINE",
-      width: 120,
-      align: "right",
-      valueFormatter: (value) =>
-        value ? new Date(value).toLocaleDateString("it-IT") : "",
+      flex: 0.75,
+      minWidth: 120,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (param) => this.formattaData(param.row.data_fine),
     },
-    //   { field: "note", headerName: "NOTE", width: 220 },
   ];
 
   getDettaglioGara = (param) => {
-    //debugger;
     let idGara = param.row["id_gara"];
     this.setState({
       idGara: idGara,
@@ -271,33 +359,96 @@ export default class CmpGare extends Component {
 
   getIntestazione = () => {
     return (
-      <div className="container boxStyle">
-        <div className="row">
-          <div className="col-4 headerGrid">
-            <EmojiEventsIcon />
-            &nbsp;{" "}
-            {this.utilityCrono.defineIfIsAdministrator()
-              ? "Elenco Gare"
-              : "Elenco delle mie gare"}
-          </div>
-          {this.utilityCrono.defineIfIsAdministrator() && (
-            <div className="col-8">
-              <Button
-                title="Legenda"
-                className="styleButton"
-                onClick={this.openLegenda}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          borderRadius: "18px",
+          border: "1px solid #eaecf0",
+          background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+          boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
+        }}
+      >
+        <div className="row align-items-center">
+          <div className="col-md-5 col-12 mb-2 mb-md-0">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <Box
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "12px",
+                  backgroundColor: "#eef2ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#3949ab",
+                }}
               >
-                <ListAltIcon />
-              </Button>
+                <EmojiEventsIcon />
+              </Box>
 
-              <Button className="styleButton" onClick={this.aggiungiNuovaGara}>
-                <AddCircleOutlineIcon />
-                &nbsp;Aggiungi Gara
-              </Button>
+              <Box>
+                <Box
+                  sx={{ fontSize: "1rem", fontWeight: 700, color: "#101828" }}
+                >
+                  {this.utilityCrono.defineIfIsAdministrator()
+                    ? "Elenco Gare"
+                    : "Elenco delle mie gare"}
+                </Box>
+                <Box sx={{ fontSize: "0.85rem", color: "#667085" }}>
+                  Gestione e consultazione delle gare presenti nel sistema
+                </Box>
+              </Box>
+            </Box>
+          </div>
+
+          {this.utilityCrono.defineIfIsAdministrator() && (
+            <div className="col-md-7 col-12">
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: { xs: "flex-start", md: "flex-end" },
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Button
+                  // className="styleButton"
+                  onClick={this.aggiungiNuovaGara}
+                  variant="contained"
+                  sx={{
+                    borderRadius: "12px",
+                    px: 2.5,
+                    py: 1.1,
+
+                    textTransform: "none",
+                    fontWeight: 600,
+                    fontSize: "0.92rem",
+                    letterSpacing: "0.02em",
+
+                    backgroundColor: "#4f46e5",
+                    color: "#ffffff",
+
+                    boxShadow: "0 2px 6px rgba(79,70,229,0.25)",
+
+                    "&:hover": {
+                      backgroundColor: "#4338ca",
+                      boxShadow: "0 4px 10px rgba(79,70,229,0.30)",
+                    },
+
+                    "& .MuiSvgIcon-root": {
+                      fontSize: "20px",
+                    },
+                  }}
+                >
+                  <AddCircleOutlineIcon sx={{ mr: 1 }} />
+                  Aggiungi Gara
+                </Button>
+              </Box>
             </div>
           )}
         </div>
-      </div>
+      </Paper>
     );
   };
 
@@ -307,7 +458,7 @@ export default class CmpGare extends Component {
         <div className="container">
           <div className="row rowNiko">
             <div className="col-12">
-              <Box sx={{ margin: "15px", height: "50px", width: "100%" }}>
+              <Box sx={{ margin: "15px 15px 10px 15px", width: "100%" }}>
                 {this.getIntestazione()}
               </Box>
             </div>
@@ -315,19 +466,87 @@ export default class CmpGare extends Component {
 
           <div className="row rowNiko">
             <div className="col-12">
-              <Box sx={{ margin: "15px", height: "600px", width: "100%" }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  margin: "0 15px 15px 15px",
+                  p: 1.5,
+                  height: "640px",
+                  borderRadius: "18px",
+                  border: "1px solid #eaecf0",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 8px 24px rgba(16,24,40,0.06)",
+                }}
+              >
                 <DataGridPro
-                  sx={this.utilityCrono.returnSXDtaDrig()}
+                  sx={{
+                    border: "none",
+                    fontFamily: "Roboto, Arial, sans-serif",
+                    fontSize: "0.84rem",
+
+                    "& .MuiDataGrid-columnHeaders": {
+                      backgroundColor: "#f8fafc",
+                      color: "#344054",
+                      borderBottom: "1px solid #eaecf0",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                    },
+
+                    "& .MuiDataGrid-columnHeaderTitle": {
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                      letterSpacing: "0.03em",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                    },
+
+                    "& .MuiDataGrid-row": {
+                      borderBottom: "1px solid #f2f4f7",
+                      backgroundColor: "#ffffff",
+                    },
+
+                    "& .MuiDataGrid-row:nth-of-type(even)": {
+                      backgroundColor: "#fcfcfd",
+                    },
+
+                    "& .MuiDataGrid-row:hover": {
+                      backgroundColor: "#f5f8ff",
+                    },
+
+                    "& .MuiDataGrid-cell": {
+                      borderBottom: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      fontSize: "0.83rem",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      color: "#101828",
+                    },
+
+                    "& .MuiDataGrid-footerContainer": {
+                      borderTop: "1px solid #eaecf0",
+                      backgroundColor: "#fcfcfd",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+
+                    "& .MuiTablePagination-root": {
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+
+                    "& .MuiDataGrid-toolbarContainer": {
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+                  }}
                   initialState={{
                     pagination: {
                       paginationModel: { pageSize: 20, page: 0 },
                     },
                   }}
                   getRowId={(row) => row["id_gara"]}
-                  rowHeight={40}
+                  rowHeight={52}
                   rows={this.state.elencoGare}
                   columns={this.Colonne}
-                  pagination={true}
+                  pagination
                   pageSizeOptions={[20, 50]}
                   disableRowSelectionOnClick
                   showToolbar
@@ -346,7 +565,7 @@ export default class CmpGare extends Component {
                     },
                   }}
                 />
-              </Box>
+              </Paper>
             </div>
           </div>
         </div>

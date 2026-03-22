@@ -3,12 +3,14 @@ import axios from "axios";
 
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
 import { DataGridPro } from "@mui/x-data-grid-pro";
 
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
-import ListAltIcon from "@mui/icons-material/ListAlt";
 import PublishedWithChangesIcon from "@mui/icons-material/PublishedWithChanges";
 import ModeIcon from "@mui/icons-material/Mode";
 import BlockIcon from "@mui/icons-material/Block";
@@ -66,11 +68,6 @@ export default class CmpNotaSpesa extends Component {
     let urlQueryApi = "/nota_spesa/list.php";
     let myBody = JSON.stringify({ id: sessionStorage["ID"] });
 
-    // Se vorrai filtrare lato backend per utente non admin:
-    // if (sessionStorage["ruolo"] !== "administrator") {
-    //   urlQueryApi += "?rifUtente=" + sessionStorage["ID"];
-    // }
-
     axios
       .post(urlApi + urlQueryApi, myBody, { withCredentials: true })
       .then((response) => {
@@ -87,48 +84,6 @@ export default class CmpNotaSpesa extends Component {
         this.setState({ caricamentoDati: false });
         console.log("Errore caricamento note spesa:", error);
       });
-  };
-
-  returnIconaStatoNotaSpesa = (stato) => {
-    switch ((stato || "").toUpperCase()) {
-      case "APPROVATA":
-        return (
-          <i title={stato}>
-            <DoneAllIcon sx={{ color: "#0bc032" }} />
-          </i>
-        );
-
-      case "INVIATA":
-        return (
-          <i title={stato}>
-            <PublishedWithChangesIcon sx={{ color: "#1e88e5" }} />
-          </i>
-        );
-
-      case "BOZZA":
-        return (
-          <i title={stato}>
-            <PendingIcon sx={{ color: "#f3960b" }} />
-          </i>
-        );
-
-      case "RESPINTA":
-        return (
-          <i title={stato}>
-            <BlockIcon sx={{ color: "#dd1b25" }} />
-          </i>
-        );
-
-      case "LIQUIDATA":
-        return (
-          <i title={stato}>
-            <ModeIcon sx={{ color: "#7b1fa2" }} />
-          </i>
-        );
-
-      default:
-        return <></>;
-    }
   };
 
   calcolaTotale = (row) => {
@@ -151,93 +106,204 @@ export default class CmpNotaSpesa extends Component {
     }).format(parseFloat(value));
   };
 
+  formattaData = (value) => {
+    if (!value) return "";
+    return new Date(value).toLocaleDateString("it-IT");
+  };
+
+  returnChipStatoNotaSpesa = (stato) => {
+    switch ((stato || "").toUpperCase()) {
+      case "APPROVATA":
+        return (
+          <Chip
+            icon={<DoneAllIcon />}
+            label="Approvata"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#e8f7ed",
+              color: "#1f7a36",
+              "& .MuiChip-icon": { color: "#1f7a36" },
+            }}
+          />
+        );
+
+      case "INVIATA":
+        return (
+          <Chip
+            icon={<PublishedWithChangesIcon />}
+            label="Inviata"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#eaf2fd",
+              color: "#1e88e5",
+              "& .MuiChip-icon": { color: "#1e88e5" },
+            }}
+          />
+        );
+
+      case "BOZZA":
+        return (
+          <Chip
+            icon={<PendingIcon />}
+            label="Bozza"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#fff4e5",
+              color: "#b26a00",
+              "& .MuiChip-icon": { color: "#b26a00" },
+            }}
+          />
+        );
+
+      case "RESPINTA":
+        return (
+          <Chip
+            icon={<BlockIcon />}
+            label="Respinta"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#fdecec",
+              color: "#b42318",
+              "& .MuiChip-icon": { color: "#b42318" },
+            }}
+          />
+        );
+
+      case "LIQUIDATA":
+        return (
+          <Chip
+            icon={<ModeIcon />}
+            label="Liquidata"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: "10px",
+              backgroundColor: "#f3e8ff",
+              color: "#7b1fa2",
+              "& .MuiChip-icon": { color: "#7b1fa2" },
+            }}
+          />
+        );
+
+      default:
+        return <Chip label={stato || "-"} size="small" />;
+    }
+  };
+
   Colonne = [
     {
       field: "azioni",
       headerName: "",
-      width: 70,
+      width: 80,
       align: "center",
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
       renderCell: (param) => {
         return (
-          <Button
-            title="Apri dettaglio nota spesa"
-            className="styleButton"
-            style={{ height: "35px", minWidth: "35px" }}
-            onClick={() => this.getDettaglioNotaSpesa(param)}
-          >
-            <EditIcon fontSize="small" />
-          </Button>
+          <Tooltip title="Apri dettaglio nota spesa">
+            <Button
+              className="styleButton"
+              onClick={() => this.getDettaglioNotaSpesa(param)}
+              sx={{
+                minWidth: "36px",
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                border: "1px solid #d0d5dd",
+                backgroundColor: "#ffffff",
+                color: "#344054",
+                boxShadow: "0 1px 2px rgba(16,24,40,0.05)",
+                "&:hover": {
+                  backgroundColor: "#f9fafb",
+                  borderColor: "#bfc6d4",
+                },
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </Button>
+          </Tooltip>
         );
       },
     },
-    // { field: "id", headerName: "ID", width: 80, align: "center" },
-    // {
-    //   field: "utente",
-    //   headerName: "UTENTE",
-    //   width: 180,
-    // },
     {
       field: "nome_gara",
       headerName: "GARA",
-      width: 240,
+      minWidth: 240,
+      flex: 1.3,
+      renderCell: (param) => (
+        <Box sx={{ fontWeight: 600, color: "#101828" }}>
+          {param.row.nome_gara}
+        </Box>
+      ),
     },
     {
       field: "disciplina",
       headerName: "DISCIPLINA",
-      width: 120,
+      minWidth: 120,
+      flex: 0.8,
     },
     {
       field: "manifestazione",
       headerName: "MANIFEST.",
-      width: 160,
+      minWidth: 150,
+      flex: 0.9,
     },
     {
       field: "data_servizio",
       headerName: "DATA SERVIZIO",
-      width: 130,
-      align: "right",
-      valueFormatter: (value) =>
-        value ? new Date(value).toLocaleDateString("it-IT") : "",
+      minWidth: 130,
+      flex: 0.8,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (param) => this.formattaData(param.row.data_servizio),
     },
     {
       field: "km_percorsi",
       headerName: "KM",
-      width: 90,
+      minWidth: 90,
+      flex: 0.5,
       align: "right",
-      valueFormatter: (value) => this.formattaImporto(value),
+      headerAlign: "right",
+      renderCell: (param) => this.formattaImporto(param.row.km_percorsi),
     },
     {
       field: "spese_autostrada_eur",
       headerName: "AUTOSTR.",
-      width: 100,
+      minWidth: 100,
+      flex: 0.7,
       align: "right",
-      valueFormatter: (value) => this.formattaImporto(value),
+      headerAlign: "right",
+      renderCell: (param) =>
+        this.formattaImporto(param.row.spese_autostrada_eur),
     },
     {
       field: "totale_nota",
       headerName: "TOTALE",
-      width: 110,
+      minWidth: 110,
+      flex: 0.8,
       align: "right",
-      valueGetter: (value, row) => this.calcolaTotale(row),
-      valueFormatter: (value) => this.formattaImporto(value),
+      headerAlign: "right",
+      renderCell: (param) =>
+        this.formattaImporto(this.calcolaTotale(param.row)),
     },
     {
       field: "stato",
       headerName: "STATO",
-      width: 110,
+      minWidth: 140,
+      flex: 0.9,
       align: "center",
-      renderCell: (param) => {
-        return this.returnIconaStatoNotaSpesa(param.row.stato);
-      },
+      headerAlign: "center",
+      renderCell: (param) => this.returnChipStatoNotaSpesa(param.row.stato),
     },
-    // {
-    //   field: "created_at",
-    //   headerName: "CREATA IL",
-    //   width: 140,
-    //   align: "right",
-    //   valueFormatter: (value) =>
-    //     value ? new Date(value).toLocaleDateString("it-IT") : "",
-    // },
   ];
 
   getDettaglioNotaSpesa = (param) => {
@@ -266,40 +332,94 @@ export default class CmpNotaSpesa extends Component {
     });
   };
 
-  openLegenda = () => {
-    this.setState({
-      openLegenda: true,
-    });
-  };
-
-  chiudiLegenda = () => {
-    this.setState({
-      openLegenda: false,
-    });
-  };
-
   getIntestazione = () => {
+    const userInfo = this.utilityCrono.returnUserInfo();
+
     return (
-      <div className="container boxStyle">
-        <div className="row">
-          <div className="col-8 headerGrid">
-            <ReceiptLongIcon />
-            &nbsp;Elenco Note Spesa -{" "}
-            {this.utilityCrono.returnUserInfo().last_name +
-              " " +
-              this.utilityCrono.returnUserInfo().first_name}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          borderRadius: "18px",
+          border: "1px solid #eaecf0",
+          background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+          boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
+        }}
+      >
+        <div className="row align-items-center">
+          <div className="col-md-7 col-12 mb-2 mb-md-0">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <Box
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "12px",
+                  backgroundColor: "#eef2ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#3949ab",
+                }}
+              >
+                <ReceiptLongIcon />
+              </Box>
+
+              <Box>
+                <Box
+                  sx={{ fontSize: "1rem", fontWeight: 700, color: "#101828" }}
+                >
+                  Elenco Note Spesa
+                </Box>
+                <Box sx={{ fontSize: "0.85rem", color: "#667085" }}>
+                  {userInfo.last_name + " " + userInfo.first_name}
+                </Box>
+              </Box>
+            </Box>
           </div>
-          <div className="col-4">
-            <Button
-              className="styleButton"
-              onClick={this.aggiungiNuovaNotaSpesa}
+
+          <div className="col-md-5 col-12">
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: { xs: "flex-start", md: "flex-end" },
+              }}
             >
-              <AddCircleOutlineIcon />
-              &nbsp;Aggiungi Nota Spesa
-            </Button>
+              <Button
+                //className="styleButton"
+                onClick={this.aggiungiNuovaNotaSpesa}
+                variant="contained"
+                sx={{
+                  borderRadius: "12px",
+                  px: 2.5,
+                  py: 1.1,
+
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "0.92rem",
+                  letterSpacing: "0.02em",
+
+                  backgroundColor: "#4f46e5",
+                  color: "#ffffff",
+
+                  boxShadow: "0 2px 6px rgba(79,70,229,0.25)",
+
+                  "&:hover": {
+                    backgroundColor: "#4338ca",
+                    boxShadow: "0 4px 10px rgba(79,70,229,0.30)",
+                  },
+
+                  "& .MuiSvgIcon-root": {
+                    fontSize: "20px",
+                  },
+                }}
+              >
+                <AddCircleOutlineIcon sx={{ mr: 1 }} />
+                Aggiungi Nota Spesa
+              </Button>
+            </Box>
           </div>
         </div>
-      </div>
+      </Paper>
     );
   };
 
@@ -309,7 +429,7 @@ export default class CmpNotaSpesa extends Component {
         <div className="container">
           <div className="row rowNiko">
             <div className="col-12">
-              <Box sx={{ margin: "15px", height: "50px", width: "100%" }}>
+              <Box sx={{ margin: "15px 15px 10px 15px", width: "100%" }}>
                 {this.getIntestazione()}
               </Box>
             </div>
@@ -317,19 +437,87 @@ export default class CmpNotaSpesa extends Component {
 
           <div className="row rowNiko">
             <div className="col-12">
-              <Box sx={{ margin: "15px", height: "600px", width: "100%" }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  margin: "0 15px 15px 15px",
+                  p: 1.5,
+                  height: "620px",
+                  borderRadius: "18px",
+                  border: "1px solid #eaecf0",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 8px 24px rgba(16,24,40,0.06)",
+                }}
+              >
                 <DataGridPro
-                  sx={this.utilityCrono.returnSXDtaDrig()}
+                  sx={{
+                    border: "none",
+                    fontFamily: "Roboto, Arial, sans-serif",
+                    fontSize: "0.84rem",
+
+                    "& .MuiDataGrid-columnHeaders": {
+                      backgroundColor: "#f8fafc",
+                      color: "#344054",
+                      borderBottom: "1px solid #eaecf0",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                    },
+
+                    "& .MuiDataGrid-columnHeaderTitle": {
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                      letterSpacing: "0.03em",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                    },
+
+                    "& .MuiDataGrid-row": {
+                      borderBottom: "1px solid #f2f4f7",
+                      backgroundColor: "#ffffff",
+                    },
+
+                    "& .MuiDataGrid-row:nth-of-type(even)": {
+                      backgroundColor: "#fcfcfd",
+                    },
+
+                    "& .MuiDataGrid-row:hover": {
+                      backgroundColor: "#f5f8ff",
+                    },
+
+                    "& .MuiDataGrid-cell": {
+                      borderBottom: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      fontSize: "0.83rem",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      color: "#101828",
+                    },
+
+                    "& .MuiDataGrid-footerContainer": {
+                      borderTop: "1px solid #eaecf0",
+                      backgroundColor: "#fcfcfd",
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+
+                    "& .MuiTablePagination-root": {
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+
+                    "& .MuiDataGrid-toolbarContainer": {
+                      fontFamily: "Roboto, Arial, sans-serif",
+                      fontSize: "0.80rem",
+                    },
+                  }}
                   initialState={{
                     pagination: {
                       paginationModel: { pageSize: 20, page: 0 },
                     },
                   }}
                   getRowId={(row) => row["id"]}
-                  rowHeight={40}
+                  rowHeight={46}
                   rows={this.state.elencoNoteSpesa}
                   columns={this.Colonne}
-                  pagination={true}
+                  pagination
                   pageSizeOptions={[20, 50]}
                   disableRowSelectionOnClick
                   showToolbar
@@ -348,7 +536,7 @@ export default class CmpNotaSpesa extends Component {
                     },
                   }}
                 />
-              </Box>
+              </Paper>
             </div>
           </div>
         </div>

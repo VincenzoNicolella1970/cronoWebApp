@@ -314,7 +314,7 @@ export default class CmpUtentiGare extends Component {
                   <div className="col-12">
                     <Form.Group className="mb-3">
                       <Form.Label className="labelFieldnk">Ruolo</Form.Label>
-                      <Form.Control
+                      {/* <Form.Control
                         className="textFieldnk"
                         size="sm"
                         type="text"
@@ -323,7 +323,30 @@ export default class CmpUtentiGare extends Component {
                           this.setState({ ruolo: e.target.value })
                         }
                         placeholder="Es. Cronometrista"
-                      />
+                      /> */}
+
+                      <Form.Select
+                        className="textFieldnk"
+                        size="sm"
+                        value={this.state.ruolo}
+                        onChange={(e) =>
+                          this.setState({
+                            ruolo: e.target.value,
+                            errorUtente: false,
+                          })
+                        }
+                      >
+                        <option value="">Seleziona utente...</option>
+                        <option key={"SERVIZIO BASE"} value={"SERVIZIO BASE"}>
+                          SERVIZIO BASE
+                        </option>
+                        <option
+                          key={"SERVIZIO SPECIALISTICO"}
+                          value="SERVIZIO SPECIALISTICO"
+                        >
+                          SERVIZIO SPECIALISTICO
+                        </option>
+                      </Form.Select>
                     </Form.Group>
                   </div>
                 </div>

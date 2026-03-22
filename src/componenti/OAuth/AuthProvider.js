@@ -69,7 +69,7 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginActionBackEnd = async () => {
+  const loginActionBackEnd = async (keyLogin) => {
     try {
       const response = await fetch(
         "http://localhost:8001/utenti/auth-dev.php",
@@ -79,6 +79,7 @@ const AuthProvider = ({ children }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ keyLogin: keyLogin }),
         },
       );
 
