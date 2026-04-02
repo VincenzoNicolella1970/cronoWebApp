@@ -241,7 +241,8 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
     const sp2 = this.parseNumero(nota?.spesa2_eur);
     const ricevute = this.parseNumero(nota?.somme_ricevute_eur);
 
-    return autostrada + sp1 + sp2 - ricevute;
+    //return autostrada + sp1 + sp2 - ricevute;
+    return autostrada + sp1 + sp2;
   };
 
   aggiornaTotaleFinale = (override = {}) => {
@@ -371,6 +372,7 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
             ),
           },
         });
+        this.props.aggiornaListaNoteSpese();
       })
       .catch((error) => {
         console.log("Errore salvataggio ricalcolo amministrativo:", error);
@@ -496,8 +498,10 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
     }
   };
 
-  renderFieldInline = (label, value, alignRight = false) => (
-    <div className="col-12 col-md-6 col-lg-3 mb-3">
+  renderFieldInline = (classStr, label, value, alignRight = false) => (
+    <div className={classStr}>
+      {" "}
+      {/*"col-12 col-md-6 col-lg-3 mb-3"*/}
       <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
         {label}
       </div>
@@ -717,13 +721,26 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                   "Dati generali",
                   <div className="container-fluid px-0">
                     <div className="row">
-                      {this.renderFieldInline("Utente", nota.utente)}
-                      {this.renderFieldInline("Gara", nota.nome_gara)}
+                      {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-4 mb-2",
+                        "Utente",
+                        nota.utente,
+                      )}
+                      {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-8 mb-3",
+                        "Gara",
+                        nota.nome_gara,
+                      )}
                     </div>
 
                     <div className="row">
-                      {this.renderFieldInline("Disciplina", nota.disciplina)}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-4 mb-3",
+                        "Disciplina",
+                        nota.disciplina,
+                      )}
+                      {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-8 mb-3",
                         "Manifestazione",
                         nota.manifestazione,
                       )}
@@ -731,14 +748,17 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
 
                     <div className="row">
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-4 mb-3",
                         "Comune",
                         nota.comune || nota.nome_comune,
                       )}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-4 mb-3",
                         "Provincia",
                         nota.provincia || nota.nome_provincia,
                       )}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-4 mb-3",
                         "Regione",
                         nota.regione || nota.nome_regione,
                       )}
@@ -751,20 +771,28 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                   <div className="container-fluid px-0">
                     <div className="row">
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Ora inizio servizio",
                         nota.ora_inizio_servizio,
                       )}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Ora fine servizio",
                         nota.ora_fine_servizio,
                       )}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Ore totali",
                         this.formattaOre(oreTotaliServizio),
                         true,
                       )}
-
-                      <div className="col-12 col-md-6 col-lg-3 mb-3">
+                      {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
+                        "Ore extra oltre 4h",
+                        this.formattaOre(this.formattaOre(oreExtraCalcolate)),
+                        true,
+                      )}
+                      {/* <div className="col-12 col-md-6 col-lg-3 mb-3">
                         <Form.Group>
                           <Form.Label style={{ fontWeight: 600 }}>
                             Ore extra oltre 4h
@@ -790,15 +818,17 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                             Calcolate: {this.formattaOre(oreExtraCalcolate)}
                           </div>
                         </Form.Group>
-                      </div>
+                      </div> */}
                     </div>
 
                     <div className="row">
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Ora inizio gara",
                         nota.ora_inizio_gara,
                       )}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Ora fine gara",
                         nota.ora_fine_gara,
                       )}
@@ -810,17 +840,24 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                   "Trasporto",
                   <div className="container-fluid px-0">
                     <div className="row">
-                      {this.renderFieldInline("Targa auto", nota.targa_auto)}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
+                        "Targa auto",
+                        nota.targa_auto,
+                      )}
+                      {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Km percorsi",
                         this.formattaImporto(nota.km_percorsi),
                         true,
                       )}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Persone trasportate",
                         nota.persone_trasportate,
                       )}
                       {this.renderFieldInline(
+                        "col-12 col-md-6 col-lg-3 mb-3",
                         "Trasportato da",
                         nota.trasportato_da,
                       )}
@@ -847,14 +884,14 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
                           nota.spesa2_eur,
                         )
                       : null}
-                    {this.renderImportoRow(
+                    {/* {this.renderImportoRow(
                       `Somme ricevute${
                         nota.somme_ricevute_da
                           ? " da " + nota.somme_ricevute_da
                           : ""
                       }`,
                       -this.parseNumero(nota.somme_ricevute_eur),
-                    )}
+                    )} */}
                     {this.renderImportoRow(
                       "Totale base nota",
                       totaleBase,
@@ -1087,7 +1124,7 @@ export default class CmpDettaglioNotaSpesaAdmin extends Component {
             </Button>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {nota && (
+              {nota && statiDisponibili.length > 0 && (
                 <Button
                   onClick={this.salvaRicalcoloAdmin}
                   variant="contained"

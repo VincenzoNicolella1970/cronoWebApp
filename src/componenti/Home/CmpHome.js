@@ -1,9 +1,14 @@
 import React, { Component } from "react";
+import axios from "axios";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Divider from "@mui/material/Divider";
+import CircularProgress from "@mui/material/CircularProgress";
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
@@ -16,6 +21,8 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import InsightsIcon from "@mui/icons-material/Insights";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import UpdateIcon from "@mui/icons-material/Update";
+import ClearIcon from "@mui/icons-material/Clear";
+import SearchIcon from "@mui/icons-material/Search";
 
 import {
   ResponsiveContainer,
@@ -38,85 +45,213 @@ import utilityCrono from "../utility/utilityCrono";
 export default class CmpHome extends Component {
   utilityCrono = new utilityCrono();
 
+  getCurrentYearStart = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-01-01`;
+  };
+
+  getToday = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  getEmptyDashboard = () => ({
+    periodo: "",
+    dataDa: "",
+    dataA: "",
+    gareTotali: 0,
+    noteTotali: 0,
+    noteInviate: 0,
+    noteApprovate: 0,
+    noteRifiutate: 0,
+    noteLiquidate: 0,
+    ultimeAttivita: [],
+    andamentoMensile: [],
+    statoNote: [
+      { nome: "Bozza", valore: 0 },
+      { nome: "Inviate", valore: 0 },
+      { nome: "Approvate", valore: 0 },
+      { nome: "Rifiutate", valore: 0 },
+      { nome: "Liquidate", valore: 0 },
+    ],
+  });
+
   state = {
     dashboardAdmin: {
-      periodo: "01/01/2026 - 20/03/2026",
-      gareTotali: 28,
-      noteTotali: 54,
-      noteInviate: 18,
-      noteApprovate: 21,
-      noteLiquidate: 9,
-      ultimeAttivita: [
-        {
-          id: 1,
-          testo: 'Creata gara "Campionato Regionale Slalom"',
-          data: "18/03/2026",
-        },
-        {
-          id: 2,
-          testo: "Nota spesa inviata da Mario Rossi",
-          data: "18/03/2026",
-        },
-        {
-          id: 3,
-          testo: "Nota spesa approvata per Gara Jafferau",
-          data: "17/03/2026",
-        },
-        {
-          id: 4,
-          testo: "Liquidata nota spesa #NS0024",
-          data: "15/03/2026",
-        },
-      ],
-      andamentoMensile: [
-        { mese: "Gen", gare: 8, note: 14 },
-        { mese: "Feb", gare: 11, note: 19 },
-        { mese: "Mar", gare: 9, note: 21 },
-      ],
+      periodo: "",
+      dataDa: "",
+      dataA: "",
+      gareTotali: 0,
+      noteTotali: 0,
+      noteInviate: 0,
+      noteApprovate: 0,
+      noteRifiutate: 0,
+      noteLiquidate: 0,
+      ultimeAttivita: [],
+      andamentoMensile: [],
       statoNote: [
-        { nome: "Bozza", valore: 6 },
-        { nome: "Inviate", valore: 18 },
-        { nome: "Approvate", valore: 21 },
-        { nome: "Liquidate", valore: 9 },
+        { nome: "Bozza", valore: 0 },
+        { nome: "Inviate", valore: 0 },
+        { nome: "Approvate", valore: 0 },
+        { nome: "Rifiutate", valore: 0 },
+        { nome: "Liquidate", valore: 0 },
       ],
     },
 
     dashboardUtente: {
-      periodo: "01/01/2026 - 20/03/2026",
-      gareTotali: 6,
-      noteTotali: 5,
-      noteInviate: 2,
-      noteApprovate: 2,
-      noteLiquidate: 1,
-      ultimeAttivita: [
-        {
-          id: 1,
-          testo: 'Hai partecipato alla gara "Trofeo Piemonte"',
-          data: "16/03/2026",
-        },
-        {
-          id: 2,
-          testo: "Hai inviato una nota spesa",
-          data: "14/03/2026",
-        },
-        {
-          id: 3,
-          testo: "La tua nota spesa è stata approvata",
-          data: "12/03/2026",
-        },
-      ],
-      andamentoMensile: [
-        { mese: "Gen", gare: 2, note: 1 },
-        { mese: "Feb", gare: 1, note: 2 },
-        { mese: "Mar", gare: 3, note: 2 },
-      ],
+      periodo: "",
+      dataDa: "",
+      dataA: "",
+      gareTotali: 0,
+      noteTotali: 0,
+      noteInviate: 0,
+      noteApprovate: 0,
+      noteRifiutate: 0,
+      noteLiquidate: 0,
+      ultimeAttivita: [],
+      andamentoMensile: [],
       statoNote: [
         { nome: "Bozza", valore: 0 },
-        { nome: "Inviate", valore: 2 },
-        { nome: "Approvate", valore: 2 },
-        { nome: "Liquidate", valore: 1 },
+        { nome: "Inviate", valore: 0 },
+        { nome: "Approvate", valore: 0 },
+        { nome: "Rifiutate", valore: 0 },
+        { nome: "Liquidate", valore: 0 },
       ],
     },
+
+    dataDa: "",
+    dataA: "",
+
+    caricamentoDashboard: true,
+    erroreDashboard: "",
+  };
+
+  componentDidMount() {
+    this.setState(
+      {
+        dataDa: this.getCurrentYearStart(),
+        dataA: this.getToday(),
+      },
+      () => this.caricaDashboard(),
+    );
+  }
+
+  normalizzaDashboard = (payload) => {
+    const dati = payload?.data || payload || {};
+    const fallback = this.getEmptyDashboard();
+
+    return {
+      periodo: dati.periodo || fallback.periodo,
+      dataDa: dati.dataDa || fallback.dataDa,
+      dataA: dati.dataA || fallback.dataA,
+      gareTotali: parseInt(dati.gareTotali || 0, 10),
+      noteTotali: parseInt(dati.noteTotali || 0, 10),
+      noteInviate: parseInt(dati.noteInviate || 0, 10),
+      noteApprovate: parseInt(dati.noteApprovate || 0, 10),
+      noteRifiutate: parseInt(dati.noteRifiutate || 0, 10),
+      noteLiquidate: parseInt(dati.noteLiquidate || 0, 10),
+      ultimeAttivita: Array.isArray(dati.ultimeAttivita)
+        ? dati.ultimeAttivita
+        : fallback.ultimeAttivita,
+      andamentoMensile: Array.isArray(dati.andamentoMensile)
+        ? dati.andamentoMensile
+        : fallback.andamentoMensile,
+      statoNote: Array.isArray(dati.statoNote)
+        ? dati.statoNote
+        : fallback.statoNote,
+    };
+  };
+
+  caricaDashboard = async () => {
+    const urlApi = process.env.REACT_APP_API_URL;
+    const isAdmin = this.utilityCrono.defineIfIsAdministrator();
+
+    this.setState({
+      caricamentoDashboard: true,
+      erroreDashboard: "",
+    });
+
+    try {
+      if (isAdmin) {
+        const response = await axios.get(urlApi + "/home/dashboard_admin.php", {
+          withCredentials: true,
+          params: {
+            data_da: this.state.dataDa,
+            data_a: this.state.dataA,
+          },
+        });
+
+        this.setState({
+          dashboardAdmin: this.normalizzaDashboard(response.data),
+          caricamentoDashboard: false,
+        });
+      } else {
+        const response = await axios.post(
+          urlApi + "/home/dashboard_utente.php",
+          JSON.stringify({
+            id: sessionStorage["ID"],
+            data_da: this.state.dataDa,
+            data_a: this.state.dataA,
+          }),
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        this.setState({
+          dashboardUtente: this.normalizzaDashboard(response.data),
+          caricamentoDashboard: false,
+        });
+      }
+    } catch (error) {
+      console.log("Errore caricamento dashboard:", error);
+
+      let messaggio = isAdmin
+        ? "Errore caricamento dashboard admin."
+        : "Errore caricamento dashboard utente.";
+
+      if (error.response && error.response.data) {
+        if (error.response.data.message) {
+          messaggio = error.response.data.message;
+        } else if (error.response.data.error) {
+          messaggio = error.response.data.error;
+        }
+      }
+
+      this.setState({
+        caricamentoDashboard: false,
+        erroreDashboard: messaggio,
+      });
+    }
+  };
+
+  handleChangePeriodo = (field, value) => {
+    this.setState({ [field]: value });
+  };
+
+  avviaRicerca = () => {
+    let { dataDa, dataA } = this.state;
+
+    if (!dataDa || !dataA) {
+      this.setState({
+        erroreDashboard: "Seleziona entrambe le date del periodo.",
+      });
+      return;
+    }
+
+    if (dataA < dataDa) {
+      [dataDa, dataA] = [dataA, dataDa];
+      this.setState({ dataDa, dataA }, () => this.caricaDashboard());
+      return;
+    }
+
+    this.caricaDashboard();
   };
 
   getCardSX = () => ({
@@ -178,6 +313,95 @@ export default class CmpHome extends Component {
     );
   };
 
+  getFiltroPeriodoCard = () => {
+    return (
+      <Paper elevation={0} sx={this.getCardSX()}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 2 }}>
+          <Box
+            sx={{
+              width: 46,
+              height: 46,
+              borderRadius: "14px",
+              backgroundColor: "#eef2ff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#3949ab",
+            }}
+          >
+            <CalendarMonthIcon />
+          </Box>
+
+          <Box>
+            <Box sx={{ fontSize: "1.1rem", fontWeight: 700, color: "#101828" }}>
+              Filtro periodo
+            </Box>
+            <Box sx={{ fontSize: "0.9rem", color: "#667085" }}>
+              Seleziona l’intervallo temporale da analizzare
+            </Box>
+          </Box>
+        </Box>
+
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={4}>
+            <TextField
+              label="Dal"
+              type="date"
+              fullWidth
+              value={this.state.dataDa}
+              onChange={(e) =>
+                this.handleChangePeriodo("dataDa", e.target.value)
+              }
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: "#fff",
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              label="Al"
+              type="date"
+              fullWidth
+              value={this.state.dataA}
+              onChange={(e) =>
+                this.handleChangePeriodo("dataA", e.target.value)
+              }
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: "#fff",
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={this.avviaRicerca}
+              startIcon={<SearchIcon />}
+              sx={{
+                height: "56px",
+                borderRadius: "12px",
+                textTransform: "none",
+                fontWeight: 700,
+              }}
+            >
+              Avvia ricerca
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+    );
+  };
+
   getPeriodoCard = (periodo, isAdmin) => {
     return (
       <Paper elevation={0} sx={this.getCardSX()}>
@@ -222,7 +446,13 @@ export default class CmpHome extends Component {
           />
 
           <Chip
-            icon={isAdmin ? <TrendingUpIcon /> : <PersonIcon />}
+            icon={
+              this.utilityCrono.defineIfIsAdministrator() ? (
+                <TrendingUpIcon />
+              ) : (
+                <PersonIcon />
+              )
+            }
             label={isAdmin ? "Vista globale" : "Vista personale"}
             sx={{
               borderRadius: "10px",
@@ -412,23 +642,28 @@ export default class CmpHome extends Component {
       Bozza: "#f59e0b",
       Inviate: "#3b82f6",
       Approvate: "#22c55e",
+      Rifiutate: "#ef4444",
       Liquidate: "#8b5cf6",
     };
 
     return (
       <Grid container spacing={2.4}>
-        <Grid item xs={12}>
+        <Grid size={7} item xs={12}>
+          {this.getFiltroPeriodoCard()}
+        </Grid>
+
+        <Grid size={5} item xs={12}>
           {this.getPeriodoCard(dati.periodo, isAdmin)}
         </Grid>
 
-        <Grid item xs={12} sx={{ mt: 1 }}>
+        <Grid size={12} item xs={12} sx={{ mt: 1 }}>
           {this.getActivityCard(
             isAdmin ? "Ultime attività" : "Le mie ultime attività",
             dati.ultimeAttivita,
           )}
         </Grid>
 
-        <Grid item xs={12} sx={{ mt: 2.5 }}>
+        <Grid size={12} item xs={12} sx={{ mt: 2.5 }}>
           {this.getSectionTitle(
             "Statistiche principali",
             "Indicatori sintetici relativi al periodo selezionato",
@@ -444,7 +679,7 @@ export default class CmpHome extends Component {
                 xs: "1fr",
                 sm: "1fr 1fr",
                 md: "1fr 1fr 1fr",
-                xl: "repeat(5, 1fr)",
+                xl: "repeat(6, 1fr)",
               },
               gap: 2.2,
             }}
@@ -483,6 +718,15 @@ export default class CmpHome extends Component {
               coloreIcona: "#1f7a36",
               sfondoIcona: "#e8f7ed",
               chip: "Confermate",
+            })}
+
+            {this.getKpiCard({
+              titolo: "Note rifiutate",
+              valore: dati.noteRifiutate,
+              icona: <ClearIcon />,
+              coloreIcona: "#c62828",
+              sfondoIcona: "#fdecec",
+              chip: "Respinte",
             })}
 
             {this.getKpiCard({
@@ -543,7 +787,6 @@ export default class CmpHome extends Component {
             </Grid>
 
             <Grid size={{ md: 4 }}>
-              {/* <Grid item xs={12} md={8} lg={4}> */}
               {this.getChartCard(
                 "Stato note spesa",
                 "Distribuzione per stato",
@@ -667,7 +910,22 @@ export default class CmpHome extends Component {
                 </Box>
               </Box>
 
-              {this.renderDashboard(dati, isAdmin)}
+              {this.state.caricamentoDashboard ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: 220,
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              ) : this.state.erroreDashboard ? (
+                <Alert severity="error">{this.state.erroreDashboard}</Alert>
+              ) : (
+                this.renderDashboard(dati, isAdmin)
+              )}
             </Box>
           </div>
         </div>

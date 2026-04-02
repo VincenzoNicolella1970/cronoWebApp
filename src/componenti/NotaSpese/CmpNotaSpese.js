@@ -92,7 +92,8 @@ export default class CmpNotaSpesa extends Component {
     const sp2 = parseFloat(row.spesa2_eur || 0);
     const ricevute = parseFloat(row.somme_ricevute_eur || 0);
 
-    return autostrada + sp1 + sp2 - ricevute;
+    // return autostrada + sp1 + sp2 - ricevute;
+    return autostrada + sp1 + sp2;
   };
 
   formattaImporto = (value) => {
@@ -294,6 +295,16 @@ export default class CmpNotaSpesa extends Component {
       headerAlign: "right",
       renderCell: (param) =>
         this.formattaImporto(this.calcolaTotale(param.row)),
+    },
+    {
+      field: "totale_amministrativo",
+      headerName: "TOTALE AMM.",
+      minWidth: 110,
+      flex: 0.8,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (param) =>
+        this.formattaImporto(param.row.totale_amministrativo),
     },
     {
       field: "stato",

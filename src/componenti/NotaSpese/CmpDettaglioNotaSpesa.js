@@ -12,6 +12,7 @@ import IconButton from "@mui/material/IconButton";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
@@ -29,6 +30,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import NotesIcon from "@mui/icons-material/Notes";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import SendIcon from "@mui/icons-material/Send";
 
 import utilityCrono from "../utility/utilityCrono";
 
@@ -49,9 +51,10 @@ export default class CmpDettaglioNotaSpesa extends Component {
     errorDataServizio: false,
     errorOraInizioServizio: false,
     errorOraFineServizio: false,
-    errorStato: false,
 
     fileAllegato1: null,
+
+    openConfirmInvio: false,
   };
 
   notaSpesaVuota = {
@@ -94,6 +97,17 @@ export default class CmpDettaglioNotaSpesa extends Component {
     minHeight: "42px",
   };
 
+  disabledInputStyle = {
+    border: "2px solid #d0d5dd",
+    borderRadius: "10px",
+    boxShadow: "none",
+    minHeight: "42px",
+    backgroundColor: "#f8fafc",
+    color: "#667085",
+    cursor: "not-allowed",
+    opacity: 1,
+  };
+
   componentDidUpdate = (prevProps) => {
     const dialogAppenaAperto =
       this.props.openDialog === true && prevProps.openDialog === false;
@@ -112,11 +126,18 @@ export default class CmpDettaglioNotaSpesa extends Component {
             nota = nota[0];
           }
 
+          const statoNormalizzato = nota.stato.toString().toUpperCase();
+
+          // (nota.stato || "BOZZA").toString().toUpperCase() === "INVIATA"
+          //   ? "INVIATA"
+          //   : "BOZZA";
+
           this.setState({
             intestazione: "Dettaglio Nota Spesa #" + (nota.id || ""),
             notaSpesaSelezionata: {
               ...this.notaSpesaVuota,
               ...nota,
+              stato: statoNormalizzato,
             },
             tabSelezionato: "1",
             errorRifUtente: false,
@@ -124,8 +145,8 @@ export default class CmpDettaglioNotaSpesa extends Component {
             errorDataServizio: false,
             errorOraInizioServizio: false,
             errorOraFineServizio: false,
-            errorStato: false,
             fileAllegato1: null,
+            openConfirmInvio: false,
           });
         })
         .catch((error) => {
@@ -142,15 +163,15 @@ export default class CmpDettaglioNotaSpesa extends Component {
       this.setState({
         intestazione: "Nuova Nota Spesa",
         tabSelezionato: "1",
-        notaSpesaSelezionata: { ...this.notaSpesaVuota },
+        notaSpesaSelezionata: { ...this.notaSpesaVuota, stato: "BOZZA" },
 
         errorRifUtente: false,
         errorRifGara: false,
         errorDataServizio: false,
         errorOraInizioServizio: false,
         errorOraFineServizio: false,
-        errorStato: false,
         fileAllegato1: null,
+        openConfirmInvio: false,
       });
     }
   };
@@ -164,7 +185,40 @@ export default class CmpDettaglioNotaSpesa extends Component {
     this.setState({ tabSelezionato: newValue });
   };
 
+  isNotaModificabile = () => {
+    const stato = (this.state.notaSpesaSelezionata?.stato || "BOZZA")
+      .toString()
+      .toUpperCase();
+    return stato === "BOZZA";
+  };
+
+  getControlStyle = (alignRight = false) => {
+    const baseStyle = this.isNotaModificabile()
+      ? this.inputStyle
+      : this.disabledInputStyle;
+
+    return alignRight ? { ...baseStyle, textAlign: "right" } : baseStyle;
+  };
+
+  getChipStato = (stato) => {
+    const statoUpper = (stato || "BOZZA").toString().toUpperCase();
+
+    if (statoUpper !== "BOZZA") {
+      return {
+        label: statoUpper,
+        bg: "#2e7d32",
+      };
+    }
+
+    return {
+      label: "BOZZA",
+      bg: "#1976d2",
+    };
+  };
+
   cambioProprietaNotaSpesa = (proprieta, valore) => {
+    if (!this.isNotaModificabile()) return;
+
     this.setState(
       (prevState) => ({
         notaSpesaSelezionata: {
@@ -208,11 +262,6 @@ export default class CmpDettaglioNotaSpesa extends Component {
         errore = !valore || String(valore).trim() === "";
         break;
 
-      case "stato":
-        propState = "errorStato";
-        errore = !valore || String(valore).trim() === "";
-        break;
-
       default:
         break;
     }
@@ -223,6 +272,8 @@ export default class CmpDettaglioNotaSpesa extends Component {
   };
 
   handleCambioAllegato = (evt) => {
+    if (!this.isNotaModificabile()) return;
+
     const file =
       evt.target.files && evt.target.files[0] ? evt.target.files[0] : null;
 
@@ -272,6 +323,8 @@ export default class CmpDettaglioNotaSpesa extends Component {
   };
 
   rimuoviAllegato = () => {
+    if (!this.isNotaModificabile()) return;
+
     this.setState({ fileAllegato1: null });
     this.setState((prevState) => ({
       notaSpesaSelezionata: {
@@ -297,7 +350,6 @@ export default class CmpDettaglioNotaSpesa extends Component {
     this.validaCampo("data_servizio", nota.data_servizio);
     this.validaCampo("ora_inizio_servizio", nota.ora_inizio_servizio);
     this.validaCampo("ora_fine_servizio", nota.ora_fine_servizio);
-    this.validaCampo("stato", nota.stato);
 
     const checks = [
       this.checkValue(nota.rif_utente),
@@ -305,14 +357,17 @@ export default class CmpDettaglioNotaSpesa extends Component {
       this.checkValue(nota.data_servizio),
       this.checkValue(nota.ora_inizio_servizio),
       this.checkValue(nota.ora_fine_servizio),
-      this.checkValue(nota.stato),
     ];
 
     return checks.every(Boolean);
   };
 
-  aggiornaNotaSpesa = () => {
-    const nota = this.state.notaSpesaSelezionata;
+  salvaNotaSpesa = (statoDaSalvare = "BOZZA") => {
+    const nota = {
+      ...this.state.notaSpesaSelezionata,
+      stato: statoDaSalvare,
+    };
+
     const formValido = this.validaInteroForm();
 
     if (!formValido) {
@@ -352,11 +407,20 @@ export default class CmpDettaglioNotaSpesa extends Component {
       .then((response) => {
         console.log("Salvataggio nota spesa eseguito:", response.data);
 
+        const messaggioSuccesso =
+          statoDaSalvare === "INVIATA"
+            ? "Nota spesa inviata correttamente."
+            : "Salvataggio eseguito correttamente.";
+
         this.setState({
           severity: "success",
-          checkMessaggio: "Salvataggio eseguito correttamente.",
+          checkMessaggio: messaggioSuccesso,
           avvisaOperazione: true,
           fileAllegato1: null,
+          openConfirmInvio: false,
+          notaSpesaSelezionata: {
+            ...nota,
+          },
         });
 
         this.props.chiudiDettaglio(true);
@@ -377,12 +441,40 @@ export default class CmpDettaglioNotaSpesa extends Component {
           severity: "error",
           checkMessaggio: messaggio,
           avvisaOperazione: true,
+          openConfirmInvio: false,
         });
       });
   };
 
+  apriConfermaInvio = () => {
+    if (!this.isNotaModificabile()) return;
+
+    const formValido = this.validaInteroForm();
+
+    if (!formValido) {
+      this.setState({
+        severity: "error",
+        checkMessaggio: "Completa i dati obbligatori prima dell'invio.",
+        avvisaOperazione: true,
+      });
+      return;
+    }
+
+    this.setState({ openConfirmInvio: true });
+  };
+
+  confermaInvio = () => {
+    this.salvaNotaSpesa("INVIATA");
+  };
+
+  chiudiConfermaInvio = () => {
+    this.setState({ openConfirmInvio: false });
+  };
+
   eliminaNotaSpesa = () => {
-    if (!this.state.notaSpesaSelezionata?.id) return;
+    if (!this.state.notaSpesaSelezionata?.id || !this.isNotaModificabile()) {
+      return;
+    }
 
     if (!window.confirm("Confermi l'eliminazione della nota spesa?")) return;
 
@@ -516,7 +608,8 @@ export default class CmpDettaglioNotaSpesa extends Component {
     const sp1 = this.parseNumero(nota.spesa1_eur);
     const ricevute = this.parseNumero(nota.somme_ricevute_eur);
 
-    return autostrada + sp1 - ricevute;
+    //return autostrada + sp1 - ricevute;
+    return autostrada + sp1;
   };
 
   renderSezione = (titolo, children, extra = null) => (
@@ -609,7 +702,8 @@ export default class CmpDettaglioNotaSpesa extends Component {
         onChange={(evt) =>
           this.cambioProprietaNotaSpesa(fieldName, evt.target.value)
         }
-        style={{ ...this.inputStyle, textAlign: "right" }}
+        style={this.getControlStyle(true)}
+        disabled={!this.isNotaModificabile()}
       />
     </Form.Group>
   );
@@ -619,545 +713,536 @@ export default class CmpDettaglioNotaSpesa extends Component {
     const elencoGare = this.props.elencoGare || [];
     const infoGara = this.retunInfoGara();
     const totaleNota = this.calcolaTotaleNota();
+    const isModificabile = this.isNotaModificabile();
+
+    if (!nota) return <div />;
+
+    const chipStato = this.getChipStato(nota.stato);
 
     return (
       <div>
-        {nota && (
-          <Dialog
-            fullWidth
-            maxWidth="lg"
-            disableEscapeKeyDown
-            open={this.props.openDialog}
-            onClose={this.handleClose}
-          >
-            <DialogTitle sx={{ pb: 1 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 12,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 22, fontWeight: 700 }}>
-                    {this.state.intestazione}
-                  </div>
-                  <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
-                    Compilazione e gestione nota spesa
-                  </div>
+        <Dialog
+          fullWidth
+          maxWidth="lg"
+          disableEscapeKeyDown
+          open={this.props.openDialog}
+          onClose={this.handleClose}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>
+                  {this.state.intestazione}
                 </div>
-
-                <Chip
-                  label={nota.stato || "BOZZA"}
-                  sx={{
-                    color: "#fff",
-                    fontWeight: 700,
-                    backgroundColor:
-                      nota.stato === "APPROVATA"
-                        ? "#2e7d32"
-                        : nota.stato === "RESPINTA"
-                          ? "#c62828"
-                          : nota.stato === "LIQUIDATA"
-                            ? "#6a1b9a"
-                            : "#1976d2",
-                  }}
-                />
+                <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
+                  Compilazione e gestione nota spesa
+                </div>
               </div>
-            </DialogTitle>
 
-            <DialogContent dividers sx={{ backgroundColor: "#f8fafc" }}>
-              <Form onKeyDown={this.checkSubmit}>
-                <Box sx={{ width: "100%", typography: "body1" }}>
-                  <TabContext value={this.state.tabSelezionato}>
-                    <Box sx={{ mb: 2 }}>
-                      <TabList
-                        onChange={this.handleTabsChange}
-                        aria-label="Tabs Nota Spesa"
-                        sx={{
-                          minHeight: 48,
-                          "& .MuiTabs-flexContainer": {
-                            gap: "8px",
-                            flexWrap: "wrap",
-                          },
-                          "& .MuiTab-root": {
-                            minHeight: 44,
-                            textTransform: "none",
-                            borderRadius: "12px",
-                            border: "1px solid #e2e8f0",
-                            backgroundColor: "#fff",
-                            fontWeight: 600,
-                          },
-                          "& .Mui-selected": {
-                            backgroundColor: "#eff6ff",
-                            color: "#1d4ed8 !important",
-                            borderColor: "#bfdbfe",
-                          },
-                          "& .MuiTabs-indicator": {
-                            display: "none",
-                          },
-                        }}
-                      >
-                        <Tab
-                          icon={<ReceiptLongIcon />}
-                          iconPosition="start"
-                          label="Dati principali"
-                          value="1"
-                        />
-                        <Tab
-                          icon={<AttachMoneyIcon />}
-                          iconPosition="start"
-                          label="Spese"
-                          value="3"
-                        />
-                        <Tab
-                          icon={<NotesIcon />}
-                          iconPosition="start"
-                          label="Note"
-                          value="5"
-                        />
-                      </TabList>
-                    </Box>
+              <Chip
+                label={chipStato.label}
+                sx={{
+                  color: "#fff",
+                  fontWeight: 700,
+                  backgroundColor: chipStato.bg,
+                }}
+              />
+            </div>
+          </DialogTitle>
 
-                    <TabPanel value="1" sx={{ p: 0 }}>
-                      {this.renderSezione(
-                        "Dati generali",
-                        <div className="container-fluid px-0">
-                          <div className="row">
-                            <div className="col-12 col-md-6 mb-3">
-                              {this.renderFieldBox(
-                                "Utente",
-                                this.returnUserInfo(),
-                              )}
-                            </div>
+          <DialogContent dividers sx={{ backgroundColor: "#f8fafc" }}>
+            {!isModificabile && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Questa nota spesa è stata inviata e non è più modificabile.
+              </Alert>
+            )}
 
-                            <div className="col-12 col-md-6 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Gara assegnata *
-                                </Form.Label>
-                                <Form.Select
-                                  value={nota.rif_gara || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "rif_gara",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  isValid={!this.state.errorRifGara}
-                                  isInvalid={this.state.errorRifGara}
-                                  style={this.inputStyle}
-                                >
-                                  <option value="">Seleziona gara...</option>
-                                  {elencoGare.map((item) => (
-                                    <option
-                                      key={item.id_gara}
-                                      value={item.id_gara}
-                                    >
-                                      {item.nome_gara}
-                                    </option>
-                                  ))}
-                                </Form.Select>
-                              </Form.Group>
-                            </div>
+            <Form onKeyDown={this.checkSubmit}>
+              <Box sx={{ width: "100%", typography: "body1" }}>
+                <TabContext value={this.state.tabSelezionato}>
+                  <Box sx={{ mb: 2 }}>
+                    <TabList
+                      onChange={this.handleTabsChange}
+                      aria-label="Tabs Nota Spesa"
+                      sx={{
+                        minHeight: 48,
+                        "& .MuiTabs-flexContainer": {
+                          gap: "8px",
+                          flexWrap: "wrap",
+                        },
+                        "& .MuiTab-root": {
+                          minHeight: 44,
+                          textTransform: "none",
+                          borderRadius: "12px",
+                          border: "1px solid #e2e8f0",
+                          backgroundColor: "#fff",
+                          fontWeight: 600,
+                        },
+                        "& .Mui-selected": {
+                          backgroundColor: "#eff6ff",
+                          color: "#1d4ed8 !important",
+                          borderColor: "#bfdbfe",
+                        },
+                        "& .MuiTabs-indicator": {
+                          display: "none",
+                        },
+                      }}
+                    >
+                      <Tab
+                        icon={<ReceiptLongIcon />}
+                        iconPosition="start"
+                        label="Dati principali"
+                        value="1"
+                      />
+                      <Tab
+                        icon={<AttachMoneyIcon />}
+                        iconPosition="start"
+                        label="Spese"
+                        value="3"
+                      />
+                      <Tab
+                        icon={<NotesIcon />}
+                        iconPosition="start"
+                        label="Note"
+                        value="5"
+                      />
+                    </TabList>
+                  </Box>
+
+                  <TabPanel value="1" sx={{ p: 0 }}>
+                    {this.renderSezione(
+                      "Dati generali",
+                      <div className="container-fluid px-0">
+                        <div className="row">
+                          <div className="col-12 col-md-6 mb-3">
+                            {this.renderFieldBox(
+                              "Utente",
+                              this.returnUserInfo(),
+                            )}
                           </div>
 
-                          <div className="row">
-                            <div className="col-12 col-md-6 mb-3">
-                              {this.renderFieldBox(
-                                "Disciplina",
-                                infoGara.disciplina,
-                              )}
-                            </div>
+                          <div className="col-12 col-md-6 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Gara assegnata *
+                              </Form.Label>
+                              <Form.Select
+                                value={nota.rif_gara || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "rif_gara",
+                                    evt.target.value,
+                                  )
+                                }
+                                isValid={!this.state.errorRifGara}
+                                isInvalid={this.state.errorRifGara}
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              >
+                                <option value="">Seleziona gara...</option>
+                                {elencoGare.map((item) => (
+                                  <option
+                                    key={item.id_gara}
+                                    value={item.id_gara}
+                                  >
+                                    {item.nome_gara}
+                                  </option>
+                                ))}
+                              </Form.Select>
+                            </Form.Group>
+                          </div>
+                        </div>
 
-                            <div className="col-12 col-md-6 mb-3">
-                              {this.renderFieldBox(
-                                "Manifestazione",
-                                infoGara.manifestazione,
-                              )}
-                            </div>
+                        <div className="row">
+                          <div className="col-12 col-md-6 mb-3">
+                            {this.renderFieldBox(
+                              "Disciplina",
+                              infoGara.disciplina,
+                            )}
                           </div>
 
-                          <div className="row">
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderFieldBox("Comune", infoGara.comune)}
-                            </div>
-
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderFieldBox(
-                                "Provincia",
-                                infoGara.provincia,
-                              )}
-                            </div>
-
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderFieldBox("Regione", infoGara.regione)}
-                            </div>
+                          <div className="col-12 col-md-6 mb-3">
+                            {this.renderFieldBox(
+                              "Manifestazione",
+                              infoGara.manifestazione,
+                            )}
                           </div>
-                        </div>,
-                        <Chip
-                          icon={<EventNoteIcon />}
-                          label="Obbligatorio"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />,
-                      )}
+                        </div>
 
-                      {this.renderSezione(
-                        "Servizio e gara",
-                        <div className="container-fluid px-0">
-                          <div className="row">
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Data servizio *
-                                </Form.Label>
-                                <Form.Control
-                                  type="date"
-                                  value={nota.data_servizio || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "data_servizio",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  isValid={!this.state.errorDataServizio}
-                                  isInvalid={this.state.errorDataServizio}
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora inizio servizio *
-                                </Form.Label>
-                                <Form.Control
-                                  type="time"
-                                  value={nota.ora_inizio_servizio || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "ora_inizio_servizio",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  isValid={!this.state.errorOraInizioServizio}
-                                  isInvalid={this.state.errorOraInizioServizio}
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora fine servizio *
-                                </Form.Label>
-                                <Form.Control
-                                  type="time"
-                                  value={nota.ora_fine_servizio || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "ora_fine_servizio",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  isValid={!this.state.errorOraFineServizio}
-                                  isInvalid={this.state.errorOraFineServizio}
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Stato nota *
-                                </Form.Label>
-                                <Form.Select
-                                  value={nota.stato || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "stato",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  isValid={!this.state.errorStato}
-                                  isInvalid={this.state.errorStato}
-                                  style={this.inputStyle}
-                                >
-                                  <option value="">Seleziona stato...</option>
-                                  <option value="BOZZA">BOZZA</option>
-                                  <option value="INVIATA">INVIATA</option>
-                                  <option value="APPROVATA">APPROVATA</option>
-                                  <option value="RESPINTA">RESPINTA</option>
-                                  <option value="LIQUIDATA">LIQUIDATA</option>
-                                </Form.Select>
-                              </Form.Group>
-                            </div>
+                        <div className="row">
+                          <div className="col-12 col-md-4 mb-3">
+                            {this.renderFieldBox("Comune", infoGara.comune)}
                           </div>
 
-                          <div className="row">
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora inizio gara
-                                </Form.Label>
-                                <Form.Control
-                                  type="time"
-                                  value={nota.ora_inizio_gara || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "ora_inizio_gara",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Ora fine gara
-                                </Form.Label>
-                                <Form.Control
-                                  type="time"
-                                  value={nota.ora_fine_gara || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "ora_fine_gara",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-                          </div>
-                        </div>,
-                      )}
-                    </TabPanel>
-
-                    <TabPanel value="3" sx={{ p: 0 }}>
-                      {this.renderSezione(
-                        "Trasporto",
-                        <div className="container-fluid px-0">
-                          <div className="row">
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Targa auto
-                                </Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  value={nota.targa_auto || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "targa_auto",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  placeholder="AA000AA"
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Km percorsi
-                                </Form.Label>
-                                <Form.Control
-                                  type="number"
-                                  step="0.01"
-                                  value={nota.km_percorsi || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "km_percorsi",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  placeholder="0,00"
-                                  style={{
-                                    ...this.inputStyle,
-                                    textAlign: "right",
-                                  }}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Persone trasportate
-                                </Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  value={nota.persone_trasportate || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "persone_trasportate",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-3 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Trasportato da
-                                </Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  value={nota.trasportato_da || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "trasportato_da",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-                          </div>
-                        </div>,
-                        <Chip
-                          icon={<DirectionsCarIcon />}
-                          label="Trasporto"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />,
-                      )}
-
-                      {this.renderSezione(
-                        "Spese",
-                        <div className="container-fluid px-0">
-                          <div className="row mb-3">
-                            <div className="col-12 col-md-8 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Spesa - descrizione
-                                </Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  value={nota.spesa1_descrizione || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "spesa1_descrizione",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderInputImporto(
-                                "Spesa - importo €",
-                                "spesa1_eur",
-                                nota.spesa1_eur,
-                              )}
-                            </div>
+                          <div className="col-12 col-md-4 mb-3">
+                            {this.renderFieldBox(
+                              "Provincia",
+                              infoGara.provincia,
+                            )}
                           </div>
 
-                          <div className="row mb-3">
-                            <div className="col-12 col-md-8 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Somme ricevute da
-                                </Form.Label>
+                          <div className="col-12 col-md-4 mb-3">
+                            {this.renderFieldBox("Regione", infoGara.regione)}
+                          </div>
+                        </div>
+                      </div>,
+                      <Chip
+                        icon={<EventNoteIcon />}
+                        label="Obbligatorio"
+                        variant="outlined"
+                        sx={{ fontWeight: 600 }}
+                      />,
+                    )}
+
+                    {this.renderSezione(
+                      "Servizio e gara",
+                      <div className="container-fluid px-0">
+                        <div className="row">
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Data servizio *
+                              </Form.Label>
+                              <Form.Control
+                                type="date"
+                                value={nota.data_servizio || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "data_servizio",
+                                    evt.target.value,
+                                  )
+                                }
+                                isValid={!this.state.errorDataServizio}
+                                isInvalid={this.state.errorDataServizio}
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Ora inizio servizio *
+                              </Form.Label>
+                              <Form.Control
+                                type="time"
+                                value={nota.ora_inizio_servizio || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "ora_inizio_servizio",
+                                    evt.target.value,
+                                  )
+                                }
+                                isValid={!this.state.errorOraInizioServizio}
+                                isInvalid={this.state.errorOraInizioServizio}
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Ora fine servizio *
+                              </Form.Label>
+                              <Form.Control
+                                type="time"
+                                value={nota.ora_fine_servizio || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "ora_fine_servizio",
+                                    evt.target.value,
+                                  )
+                                }
+                                isValid={!this.state.errorOraFineServizio}
+                                isInvalid={this.state.errorOraFineServizio}
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-3 mb-3">
+                            {this.renderFieldBox("Stato nota", chipStato.label)}
+                          </div>
+                        </div>
+
+                        <div className="row">
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Ora inizio gara
+                              </Form.Label>
+                              <Form.Control
+                                type="time"
+                                value={nota.ora_inizio_gara || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "ora_inizio_gara",
+                                    evt.target.value,
+                                  )
+                                }
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Ora fine gara
+                              </Form.Label>
+                              <Form.Control
+                                type="time"
+                                value={nota.ora_fine_gara || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "ora_fine_gara",
+                                    evt.target.value,
+                                  )
+                                }
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+                        </div>
+                      </div>,
+                    )}
+                  </TabPanel>
+
+                  <TabPanel value="3" sx={{ p: 0 }}>
+                    {this.renderSezione(
+                      "Trasporto",
+                      <div className="container-fluid px-0">
+                        <div className="row">
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Targa auto
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                value={nota.targa_auto || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "targa_auto",
+                                    evt.target.value,
+                                  )
+                                }
+                                placeholder="AA000AA"
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Km percorsi
+                              </Form.Label>
+                              <Form.Control
+                                type="number"
+                                step="0.01"
+                                value={nota.km_percorsi || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "km_percorsi",
+                                    evt.target.value,
+                                  )
+                                }
+                                placeholder="0,00"
+                                style={this.getControlStyle(true)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Persone trasportate
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                value={nota.persone_trasportate || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "persone_trasportate",
+                                    evt.target.value,
+                                  )
+                                }
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-3 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Trasportato da
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                value={nota.trasportato_da || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "trasportato_da",
+                                    evt.target.value,
+                                  )
+                                }
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+                        </div>
+                      </div>,
+                      <Chip
+                        icon={<DirectionsCarIcon />}
+                        label="Trasporto"
+                        variant="outlined"
+                        sx={{ fontWeight: 600 }}
+                      />,
+                    )}
+
+                    {this.renderSezione(
+                      "Spese",
+                      <div className="container-fluid px-0">
+                        <div className="row mb-3">
+                          <div className="col-12 col-md-8 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Spesa - descrizione
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                value={nota.spesa1_descrizione || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "spesa1_descrizione",
+                                    evt.target.value,
+                                  )
+                                }
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-4 mb-3">
+                            {this.renderInputImporto(
+                              "Spesa - importo €",
+                              "spesa1_eur",
+                              nota.spesa1_eur,
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="row mb-3">
+                          <div className="col-12 col-md-8 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Somme ricevute da
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                value={nota.somme_ricevute_da || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "somme_ricevute_da",
+                                    evt.target.value,
+                                  )
+                                }
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
+                          </div>
+
+                          <div className="col-12 col-md-4 mb-3">
+                            {this.renderInputImporto(
+                              "Somme ricevute €",
+                              "somme_ricevute_eur",
+                              nota.somme_ricevute_eur,
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="row mb-3 justify-content-end">
+                          <div className="col-12 col-md-4 mb-3">
+                            {this.renderInputImporto(
+                              "Spese autostrada €",
+                              "spese_autostrada_eur",
+                              nota.spese_autostrada_eur,
+                            )}
+                          </div>
+                        </div>
+                      </div>,
+                      <Chip
+                        icon={<AttachMoneyIcon />}
+                        label="Importi"
+                        variant="outlined"
+                        sx={{ fontWeight: 600 }}
+                      />,
+                    )}
+
+                    {this.renderSezione(
+                      "Riepilogo nota",
+                      <div>
+                        {this.renderImportoRow(
+                          "Spese AUTOSTRADA",
+                          nota.spese_autostrada_eur,
+                        )}
+                        {this.renderImportoRow(
+                          nota.spesa1_descrizione || "Spesa",
+                          nota.spesa1_eur,
+                        )}
+                        {/* {this.renderImportoRow(
+                          `Somme ricevute${
+                            nota.somme_ricevute_da
+                              ? " da " + nota.somme_ricevute_da
+                              : ""
+                          }`,
+                          -this.parseNumero(nota.somme_ricevute_eur),
+                        )} */}
+                        {this.renderImportoRow("Totale nota", totaleNota, true)}
+                      </div>,
+                    )}
+
+                    {this.renderSezione(
+                      "Allegato",
+                      <div className="container-fluid px-0">
+                        <div className="row">
+                          <div className="col-12 mb-3">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Allegato 1 (max 5MB)
+                              </Form.Label>
+                              <div className="d-flex align-items-center gap-2">
                                 <Form.Control
-                                  type="text"
-                                  value={nota.somme_ricevute_da || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "somme_ricevute_da",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  style={this.inputStyle}
+                                  type="file"
+                                  accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                                  onChange={this.handleCambioAllegato}
+                                  style={this.getControlStyle(false)}
+                                  disabled={!isModificabile}
                                 />
-                              </Form.Group>
-                            </div>
-
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderInputImporto(
-                                "Somme ricevute €",
-                                "somme_ricevute_eur",
-                                nota.somme_ricevute_eur,
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="row mb-3 justify-content-end">
-                            <div className="col-12 col-md-4 mb-3">
-                              {this.renderInputImporto(
-                                "Spese autostrada €",
-                                "spese_autostrada_eur",
-                                nota.spese_autostrada_eur,
-                              )}
-                            </div>
-                          </div>
-                        </div>,
-                        <Chip
-                          icon={<AttachMoneyIcon />}
-                          label="Importi"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />,
-                      )}
-
-                      {this.renderSezione(
-                        "Riepilogo nota",
-                        <div>
-                          {this.renderImportoRow(
-                            "Spese AUTOSTRADA",
-                            nota.spese_autostrada_eur,
-                          )}
-                          {this.renderImportoRow(
-                            nota.spesa1_descrizione || "Spesa",
-                            nota.spesa1_eur,
-                          )}
-                          {this.renderImportoRow(
-                            `Somme ricevute${nota.somme_ricevute_da ? " da " + nota.somme_ricevute_da : ""}`,
-                            -this.parseNumero(nota.somme_ricevute_eur),
-                          )}
-                          {this.renderImportoRow(
-                            "Totale nota",
-                            totaleNota,
-                            true,
-                          )}
-                        </div>,
-                      )}
-
-                      {this.renderSezione(
-                        "Allegato",
-                        <div className="container-fluid px-0">
-                          <div className="row">
-                            <div className="col-12 mb-3">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Allegato 1 (max 5MB)
-                                </Form.Label>
-                                <div className="d-flex align-items-center gap-2">
-                                  <Form.Control
-                                    type="file"
-                                    accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                                    onChange={this.handleCambioAllegato}
-                                    style={this.inputStyle}
-                                  />
-                                  {(nota.allegato1_nome_file ||
-                                    this.state.fileAllegato1) && (
+                                {(nota.allegato1_nome_file ||
+                                  this.state.fileAllegato1) &&
+                                  isModificabile && (
                                     <IconButton
                                       size="small"
                                       title="Rimuovi allegato"
@@ -1166,106 +1251,140 @@ export default class CmpDettaglioNotaSpesa extends Component {
                                       <ClearIcon fontSize="small" />
                                     </IconButton>
                                   )}
+                              </div>
+
+                              {nota.allegato1_nome_file && (
+                                <div
+                                  style={{
+                                    marginTop: 6,
+                                    fontSize: 12,
+                                    color: "#475569",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                  }}
+                                >
+                                  <AttachFileIcon fontSize="inherit" />
+                                  {nota.allegato1_nome_file}
                                 </div>
-
-                                {nota.allegato1_nome_file && (
-                                  <div
-                                    style={{
-                                      marginTop: 6,
-                                      fontSize: 12,
-                                      color: "#475569",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 6,
-                                    }}
-                                  >
-                                    <AttachFileIcon fontSize="inherit" />
-                                    {nota.allegato1_nome_file}
-                                  </div>
-                                )}
-                              </Form.Group>
-                            </div>
+                              )}
+                            </Form.Group>
                           </div>
-                        </div>,
-                        <Chip
-                          icon={<AttachFileIcon />}
-                          label="PDF / immagini"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />,
-                      )}
-                    </TabPanel>
+                        </div>
+                      </div>,
+                      <Chip
+                        icon={<AttachFileIcon />}
+                        label="PDF / immagini"
+                        variant="outlined"
+                        sx={{ fontWeight: 600 }}
+                      />,
+                    )}
+                  </TabPanel>
 
-                    <TabPanel value="5" sx={{ p: 0 }}>
-                      {this.renderSezione(
-                        "Note servizio",
-                        <div className="container-fluid px-0">
-                          <div className="row">
-                            <div className="col-12">
-                              <Form.Group>
-                                <Form.Label style={{ fontWeight: 600 }}>
-                                  Annotazioni
-                                </Form.Label>
-                                <Form.Control
-                                  as="textarea"
-                                  rows={7}
-                                  value={nota.note_servizio || ""}
-                                  onChange={(evt) =>
-                                    this.cambioProprietaNotaSpesa(
-                                      "note_servizio",
-                                      evt.target.value,
-                                    )
-                                  }
-                                  placeholder="Note sulla nota spesa"
-                                  style={this.inputStyle}
-                                />
-                              </Form.Group>
-                            </div>
+                  <TabPanel value="5" sx={{ p: 0 }}>
+                    {this.renderSezione(
+                      "Note servizio",
+                      <div className="container-fluid px-0">
+                        <div className="row">
+                          <div className="col-12">
+                            <Form.Group>
+                              <Form.Label style={{ fontWeight: 600 }}>
+                                Annotazioni
+                              </Form.Label>
+                              <Form.Control
+                                as="textarea"
+                                rows={7}
+                                value={nota.note_servizio || ""}
+                                onChange={(evt) =>
+                                  this.cambioProprietaNotaSpesa(
+                                    "note_servizio",
+                                    evt.target.value,
+                                  )
+                                }
+                                placeholder="Note sulla nota spesa"
+                                style={this.getControlStyle(false)}
+                                disabled={!isModificabile}
+                              />
+                            </Form.Group>
                           </div>
-                        </div>,
-                        <Chip
-                          icon={<NotesIcon />}
-                          label="Facoltativo"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />,
-                      )}
-                    </TabPanel>
-                  </TabContext>
-                </Box>
-              </Form>
-            </DialogContent>
+                        </div>
+                      </div>,
+                      <Chip
+                        icon={<NotesIcon />}
+                        label="Facoltativo"
+                        variant="outlined"
+                        sx={{ fontWeight: 600 }}
+                      />,
+                    )}
+                  </TabPanel>
+                </TabContext>
+              </Box>
+            </Form>
+          </DialogContent>
 
-            <DialogActions
-              sx={{ px: 3, py: 2, justifyContent: "space-between" }}
-            >
-              <div>
-                {this.props.idNotaSpesa !== null && (
+          <DialogActions sx={{ px: 3, py: 2, justifyContent: "space-between" }}>
+            <div>
+              {this.props.idNotaSpesa !== null && isModificabile && (
+                <Button
+                  onClick={this.eliminaNotaSpesa}
+                  variant="outlined"
+                  color="error"
+                >
+                  <DeleteOutlineIcon />
+                  &nbsp;Elimina
+                </Button>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Button onClick={this.handleClose}>
+                <ClearIcon />
+                &nbsp;Chiudi
+              </Button>
+
+              {isModificabile && (
+                <>
                   <Button
-                    onClick={this.eliminaNotaSpesa}
+                    onClick={() => this.salvaNotaSpesa("BOZZA")}
                     variant="outlined"
-                    color="error"
                   >
-                    <DeleteOutlineIcon />
-                    &nbsp;Elimina
+                    <CheckIcon />
+                    &nbsp;Salva bozza
                   </Button>
-                )}
-              </div>
 
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <Button onClick={this.handleClose}>
-                  <ClearIcon />
-                  &nbsp;Annulla
-                </Button>
+                  <Button onClick={this.apriConfermaInvio} variant="contained">
+                    <SendIcon />
+                    &nbsp;Invia
+                  </Button>
+                </>
+              )}
+            </div>
+          </DialogActions>
+        </Dialog>
 
-                <Button onClick={this.aggiornaNotaSpesa} variant="contained">
-                  <CheckIcon />
-                  &nbsp;Conferma
-                </Button>
-              </div>
-            </DialogActions>
-          </Dialog>
-        )}
+        <Dialog
+          open={this.state.openConfirmInvio}
+          onClose={this.chiudiConfermaInvio}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Conferma invio nota spesa</DialogTitle>
+
+          <DialogContent>
+            <Typography sx={{ whiteSpace: "pre-line", fontWeight: 500 }}>
+              Stai per inviare la nota spesa.
+              {"\n\n"}Dopo l'invio non sarà più possibile modificarla.
+              {"\n\n"}Confermi?
+            </Typography>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={this.chiudiConfermaInvio}>Annulla</Button>
+            <Button variant="contained" onClick={this.confermaInvio}>
+              Conferma invio
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Snackbar
           open={this.state.avvisaOperazione}
